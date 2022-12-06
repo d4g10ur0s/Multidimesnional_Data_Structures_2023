@@ -11,19 +11,27 @@ class QuotesSpider(scrapy.Spider):
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
+    def parse_2(self,response):
+        xp = '//*[@class=\"infobox biography vcard\"]'
+        lis = response.xpath(xp)
+        for l in lis :
+            print(l.get())
+
     def parse(self, response):
-
-        #q = response.css('div.mw-parser-output')
         #
-        for i in range(0,22):
-            xp = "//*[@id=\"mw-content-text\"]/div[1]/ul["+str(i)+"]"
-            for quote in response.xpath(xp):
-                print(quote.get())
-                print('.' * 10)
-
-        '''
-        next_page = response.css('li.next a::attr(href)').get()
-        if next_page is not None:
-            next_page = response.urljoin(next_page)
-            yield scrapy.Request(next_page, callback=self.parse)
-        '''
+        #/html/body/div[3]/div[3]/div[5]/div[1]/ul[1]
+        #
+        for i in range(1,25):
+            xp = '//*[@id=\"mw-content-text\"]/div[1]/ul['+str(i)+']/li/a[contains(@href, "/wiki/")][1]'
+            #exw parei to lis
+            lis = response.xpath(xp)
+            #pairnw to link apo ka8e li
+            input()
+            for l in lis :
+                link = l.css('a::attr(href)').get()
+                if link is not None:
+                    #print(link)
+                    #print('*' * 30)
+                    link = response.urljoin(link)
+                    yield scrapy.Request(link, callback=self.parse_2)
+                    #print('*' * 30)
