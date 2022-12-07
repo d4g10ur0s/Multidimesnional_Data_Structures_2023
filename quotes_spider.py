@@ -3,6 +3,7 @@ import scrapy
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
+    info = []
 
     def start_requests(self):
         urls = [
@@ -12,10 +13,48 @@ class QuotesSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse_2(self,response):
+        #metavlhth scientist
+        scientist = {
+            'name' : '',
+            'uni' : [],
+        }
+        #pairnw to viografiko ka8e scientist
         xp = '//*[@class=\"infobox biography vcard\"]'
-        lis = response.xpath(xp)
-        for l in lis :
-            print(l.get())
+        #prpei na parw ke text
+        infobox = response.xpath(xp)
+        #
+        #8elw onoma
+        #
+        node = infobox.xpath('//*[@class=\"fn\"]')
+        name = node.css('div::text').get()
+        scientist['name'] = name
+        #print(name)
+        #input('ftasame sto name')
+        #
+        #gia na parw info
+        #
+        i = 1
+        while not(node.get()==None):
+            #//*[@id="mw-content-text"]/div[1]/table/tbody/tr[4]
+            xp = "//table/tbody/tr["+str(i)+"]"
+            node = infobox.xpath(xp)
+            #8elw alma mater
+            almamater = ''
+            header = node.css('th::text').get()
+            if "mater" in str(header):
+                print("Alma mater")
+                #pairnw to table data tou row me to alma mater
+                almamater = node.css('td')
+                #pairnw to text apo ta links gia ta panepisthmia
+                for a in almamater.css('a'):
+                    uni = a.css('a::text').get()
+                    print(uni)
+                    scientist["uni"].append(uni)
+            i+=1
+        #end while
+        i=0
+        #prepei na apo8hkeusw plhroforia
+        self.info.append(scientist)
 
     def parse(self, response):
         #
@@ -26,12 +65,19 @@ class QuotesSpider(scrapy.Spider):
             #exw parei to lis
             lis = response.xpath(xp)
             #pairnw to link apo ka8e li
-            input()
+            #input('prin mpei gia na parei apo ka8e li to link')
             for l in lis :
                 link = l.css('a::attr(href)').get()
                 if link is not None:
                     #print(link)
                     #print('*' * 30)
                     link = response.urljoin(link)
-                    yield scrapy.Request(link, callback=self.parse_2)
+                    #paw se epomenh selida
+                    scrapy.Request(link, callback=self.parse_2)
                     #print('*' * 30)
+        for k in self.info :
+            for d,v in k:
+                print("Name")
+                print(str(d))
+                print("Education")
+                print(str(v))
