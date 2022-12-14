@@ -29,12 +29,13 @@ class QuotesSpider(scrapy.Spider):
         except :
             pass
 
-    def parse_2(self,response):
+    async def parse_2(self,response):
         #metavlhth scientist
         scientist = {
             'name' : '',
             'uni' : [],
             'education_text' : None,
+            'awards' : 0,
         }
         #pairnw to viografiko ka8e scientist
         xp = '//*[@class=\"infobox biography vcard\"]'
@@ -69,41 +70,17 @@ class QuotesSpider(scrapy.Spider):
                     uni = a.css('a::text').get()
                 #    print(uni)
                     scientist["uni"].append(uni)
+            elif "wards" in str(header):
+                #pairnw to table data tou row me to awards
+                awards = node.css('td')
+                #pairnw to ta links gia ta awards...? kane ke su ena search mhn leipei kati...
+                for a in awards.css('a'):
+                    '''
+                    auto gia na kaneis debugging
+                    scientist["awards"].append[a.css('a::text').get()]
+                    '''
             i+=1
         #end while
-
-        #gia na pairnoume to education
-        i=1
-        xp = "/html/body/div[3]/div[3]/div[5]/div[1]/h2[1]"
-
-        node = response.xpath(xp)
-        ps = node.xpath('//following-sibling::p')
-
-        for p in ps:#pame se ka8e paragrafo
-            input('aaa')
-            print(str(p.get()))
-
-        #8a grapsoume regex me lekseis oi opoies exoun sxesh me education
-
-        '''
-        while node != None :
-            #pairnw to text
-            input('Edw: ')
-            header = node.css('span::text').get()
-            print(str(header))
-            if(re.search(".*[E|e]du.*",header)):
-                print(str(header))
-
-            i+=1
-            '''
-            #xp = "/html/body/div[3]/div[3]/div[5]/div[1]/h2["+str(i)+"]"
-            #node = response.xpath(xp)
-
-
-        #/html/body/div[3]/div[3]/div[5]/div[1]/h2[1]
-        #text
-        #regex --> an yparxei edu
-
         #prepei na apo8hkeusw plhroforia
         yield self.write_file(scientist)
 
