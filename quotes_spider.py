@@ -2,6 +2,8 @@ import scrapy
 import os
 import json
 import re
+import pandas as pd
+import glob
 
 
 class QuotesSpider(scrapy.Spider):
@@ -15,7 +17,7 @@ class QuotesSpider(scrapy.Spider):
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
-    def write_file(self,scientist):
+    def write_file(self,scientist,name):
         path = os.getcwd()
         try :
             to_write = json.dumps(scientist)
@@ -23,7 +25,7 @@ class QuotesSpider(scrapy.Spider):
                 pass
             else:
                 os.mkdir(path + "\\scientists")
-            f = open(path + "\\scientists\\"+scientist['name']+".json","w+")
+            f = open(path + "\\scientists\\"+name+".json","w+")
             f.write(to_write)
             f.close()
         except :
@@ -32,10 +34,9 @@ class QuotesSpider(scrapy.Spider):
     async def parse_2(self,response):
         #metavlhth scientist
         scientist = {
-            'name' : '',
-            'uni' : [],
-            'education_text' : None,
+            'name' : "",
             'awards' : 0,
+            'education_text' : None,
         }
         #pairnw to viografiko ka8e scientist
         xp = '//*[@class=\"infobox biography vcard\"]'
@@ -46,7 +47,14 @@ class QuotesSpider(scrapy.Spider):
         #
         node = infobox.xpath('//*[@class=\"fn\"]')
         name = node.css('div::text').get()
-        scientist['name'] = name
+        name2 = None
+        try:
+            name2 = name.split(' ')
+            name2 = name2[len(name2)-1]
+            name3 =''.join(list(map(str,map(ord,name2))))
+            scientist['name'] = name3
+        except:
+            pass
         #print(name)
         #input('ftasame sto name')
 
@@ -59,22 +67,13 @@ class QuotesSpider(scrapy.Spider):
             xp = "//table/tbody/tr["+str(i)+"]"
             node = infobox.xpath(xp)
             #8elw alma mater
-            almamater = ''
             header = node.css('th::text').get()
-            if "mater" in str(header):
-                #print("Alma mater")
-                #pairnw to table data tou row me to alma mater
-                almamater = node.css('td')
-                #pairnw to text apo ta links gia ta panepisthmia
-                for a in almamater.css('a'):
-                    uni = a.css('a::text').get()
-                #    print(uni)
-                    scientist["uni"].append(uni)
-            elif "wards" in str(header):
+            if "wards" in str(header):
                 #pairnw to table data tou row me to awards
                 awards = node.css('td')
                 #pairnw to ta links gia ta awards...? kane ke su ena search mhn leipei kati...
                 for a in awards.css('a'):
+                    scientist['awards']+=1
                     '''
                     auto gia na kaneis debugging
                     scientist["awards"].append[a.css('a::text').get()]
@@ -82,7 +81,7 @@ class QuotesSpider(scrapy.Spider):
             i+=1
         #end while
         #prepei na apo8hkeusw plhroforia
-        yield self.write_file(scientist)
+        yield self.write_file(scientist,name2)
 
     async def parse(self, response):
         #
@@ -103,3 +102,12 @@ class QuotesSpider(scrapy.Spider):
                     #paw se epomenh selida
                     yield scrapy.Request(link, callback=self.parse_2)
                     #print('*' * 30)
+    
+    
+        # for scientist in scientists:
+        #     with open(scientist) as doc:
+        #         exp = json.load(doc)
+        #         scientists_list.append(exp)
+        # path_to_json = 'scientists/'
+        # json_files = [pos_json for pos_json in os.listdir(path_to_json) if pos_json.endswith('.json')]
+        # print(json_files)  # for me this prints ['foo.json']
