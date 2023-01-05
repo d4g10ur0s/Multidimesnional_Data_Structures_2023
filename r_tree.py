@@ -160,36 +160,28 @@ class Rnode :
             I1.append( (i-self._min, i+self._min) )
             I2.append( (j-self._min, j+self._min) )
 
-        min = None
         e1 = []
         e2 = []
 
         l = len(self._entries)#metavlhth
         #0. insert new element
-        #2. pickNext
-        tmin = computeValidArea(I1, info)
-        if min==None or tmin < min:
-            min = tmin
+        min = computeValidArea(I1, info)
         tmin = computeValidArea(I2, info)
-        if min==None or tmin < min:
-            min = tmin
+        if tmin < min:
             choose = 2
+
         if choose == 1:
             e1.append(info)
         else:
             e2.append(info)
         #1. choose sides
         while l>0:
-            min = None
             choose = 1
             #   se poio tairiazei kalutera ?
             #2. pickNext
-            tmin = computeValidArea(I1, self._entries[0])
-            if min==None or tmin < min:
-                min = tmin
+            min = computeValidArea(I1, self._entries[0])
             tmin = computeValidArea(I2, self._entries[0])
-            if min==None or tmin < min:
-                min = tmin
+            if tmin < min:
                 choose = 2
             #chose side
             if choose == 1:
@@ -199,6 +191,7 @@ class Rnode :
 
             l = len(self._entries)
         return (I1 , e1, I2 , e2)
+
 #the Rtree
 class Rtree :
 
@@ -233,6 +226,20 @@ class Rtree :
             else:
                 #3. split Node
                 new_entries = lnode.nodeSplit()
+                p = lnode.getParent()#old parent is new parent
+                self._nodes.pop(indx)
+                #4. create 2 new nodes
+                n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                #5. install entries
+                for i , j in new_entries[1], new_entries[3]:
+                    n1.installEntry(i)
+                    n2.installEntry(j)
+                #6. insert into nodes
+                self._nodes.append(n1)
+                self._nodes.append(n2)
+
+                #loop for parents till root
 
 
     def adjustTree(self, indx):
