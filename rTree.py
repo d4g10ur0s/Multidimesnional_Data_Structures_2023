@@ -146,9 +146,11 @@ class Rnode :
                 else:
                     #compute d = area(J) - area(E1.I) - area(E2.I)
                     #0. construct J
-                    J = getJ(self._entries[i] , self._entries[j])
+                    i1 = self._entries[i]
+                    i2 = self._entries[j]
+                    J = getJ(i1[0] , i2[0])
                     #1. compute td
-                    td = area(J) - area(self._entries[i]) - area(self._entries[j])
+                    td = area(J) - area(i1[0]) - area(i2[0])
                     if d < td:
                         #2. get max d
                         d = td
@@ -170,14 +172,15 @@ class Rnode :
             I1.append( (i[0]-self._min, i[1]+self._min) )
             I2.append( (j[0]-self._min, j[1]+self._min) )
 
-        e1 = [e1[1], ]
-        e2 = [e2[1] , ]
+        e1 = [e1, ]
+        e2 = [e2 , ]
         l = len(self._entries)#metavlhth
         #0. insert new element
         min = computeValidArea(I1, info)
         tmin = computeValidArea(I2, info)
         if tmin < min:
-            e1.append(info)
+            e1.append(info)#mazi me ti I ??
+            ''' ERROR '''
         else:
             e2.append(info)
         #1. choose sides
@@ -193,6 +196,20 @@ class Rnode :
 
             l = len(self._entries)
         return (I1 , e1, I2 , e2)
+
+    '''    Adjust Pointers    '''
+    def adjustPointers(self, indx):
+        if not(self._parent==None) and indx <= self._parent :
+            self._parent -=1
+        if not self._leaf :
+            te = []
+            for i in self._entries :
+                if i[1] >= indx :
+                    e = (i[0] , i[1] - 1)
+                else:
+                    e = (i[0] , i[1])
+                te.append(e)
+            self._entries = te
 
 #the Rtree
 class Rtree :
@@ -229,8 +246,12 @@ class Rtree :
                 #3. split Node
                 new_entries = lnode.nodeSplit()
                 p = lnode.getParent()#old parent is new parent
-                self._nodes.pop(indx)
+                self._nodes.pop(indx)#prepei oloi oi komvoi na meiwsoun kata 1 to num tous
+                for i in self._nodes:
+                    i.adjustPointers(indx)
                 #4. create 2 new nodes
+                if p>=indx:
+                    p=p-1
                 n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
                 n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
                 #5. install entries
@@ -248,12 +269,12 @@ class Rtree :
                     #loop for parents till root
                     while not (self._nodes[p].hasRoom()):
                         #3. split Node
-                        new_entries = lnode.nodeSplit()
-                        p = lnode.getParent()#old parent is new parent
+                        new_entries = self._nodes[p].nodeSplit()
+                        p1 = self._nodes[p].getParent()#old parent is new parent
                         self._nodes.pop(indx)
                         #4. create 2 new nodes
-                        n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                        n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                        n1 = Rnode(self._dim,self._min,self._max,parent = p1, leaf = True)
+                        n2 = Rnode(self._dim,self._min,self._max,parent = p1, leaf = True)
                         #5. install entries
                         for i , j in new_entries[1], new_entries[3]:
                             n1.installEntry(i)
@@ -261,8 +282,6 @@ class Rtree :
                             #6. insert into nodes
                             self._nodes.append(n1)
                             self._nodes.append(n2)
-
-
 
     def adjustTree(self, indx):
         #2. if root stop
