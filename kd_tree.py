@@ -6,23 +6,25 @@ class KDNode:
 
 class KDTree:
     def init(self, points):
-        def build_kdtree(points, depth):
-            if not points:
-                return None
+        self.root = build_kdtree(points, 0)
 
-            # Select axis based on depth so that axis cycles through all valid values
-            k = len(points[0]) - 1 # Assumes all points have the same dimension
-            axis = depth % k
+    def build_kdtree(points, depth):
+         if not points:
+             return None
 
-            # Sort point list and choose median as pivot element
-            points.sort(key=lambda point: point[axis])
-            median = len(points) // 2 # Choose median
+         # Select axis based on depth so that axis cycles through all valid values
+         k = len(points[0]) - 1 # Assumes all points have the same dimension
+         axis = depth % k
 
-            # Create node and construct subtrees
-            return KDNode(
+         # Sort point list and choose median as pivot element
+         points.sort(key=lambda point: point[axis])
+         median = len(points) // 2 # Choose median
+
+         # Create node and construct subtrees
+         return KDNode(
                 points[median],
                 build_kdtree(points[:median], depth + 1),
                 build_kdtree(points[median + 1:], depth + 1)
             )
 
-        self.root = build_kdtree(points, 0)
+         
