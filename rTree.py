@@ -64,6 +64,8 @@ class Rnode :
         self._parent = parent
         self._leaf = leaf
 
+    def hasParentRoom(self):
+        return ( self._max-1 > len(self._entries) )
     def hasRoom(self):
         return ( self._max > len(self._entries) )
     def getParent(self):
@@ -101,6 +103,10 @@ class Rnode :
                 indx+=1
         #1. update entry
         self._entries[indx] = (rect , kid)
+
+    '''    set kid interval    '''
+    def newKid(self,kid):
+        self._entries[indx].append(kid)
 
     def installEntry(self, info) :
         #0. create intervals
@@ -164,9 +170,8 @@ class Rnode :
             I1.append( (i[0]-self._min, i[1]+self._min) )
             I2.append( (j[0]-self._min, j[1]+self._min) )
 
-        e1 = []
-        e2 = []
-
+        e1 = [e1[1], ]
+        e2 = [e2[1] , ]
         l = len(self._entries)#metavlhth
         #0. insert new element
         min = computeValidArea(I1, info)
@@ -236,22 +241,27 @@ class Rtree :
                 self._nodes.append(n1)
                 self._nodes.append(n2)
 
-                #loop for parents till root
-                while not (self._nodes[p].hasRoom()):
-                    #3. split Node
-                    new_entries = lnode.nodeSplit()
-                    p = lnode.getParent()#old parent is new parent
-                    self._nodes.pop(indx)
-                    #4. create 2 new nodes
-                    n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                    n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                    #5. install entries
-                    for i , j in new_entries[1], new_entries[3]:
-                        n1.installEntry(i)
-                        n2.installEntry(j)
-                    #6. insert into nodes
-                    self._nodes.append(n1)
-                    self._nodes.append(n2)
+                if self._nodes[p].hasParentRoom():
+                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
+                    self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
+                else:
+                    #loop for parents till root
+                    while not (self._nodes[p].hasRoom()):
+                        #3. split Node
+                        new_entries = lnode.nodeSplit()
+                        p = lnode.getParent()#old parent is new parent
+                        self._nodes.pop(indx)
+                        #4. create 2 new nodes
+                        n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                        n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                        #5. install entries
+                        for i , j in new_entries[1], new_entries[3]:
+                            n1.installEntry(i)
+                            n2.installEntry(j)
+                            #6. insert into nodes
+                            self._nodes.append(n1)
+                            self._nodes.append(n2)
+
 
 
     def adjustTree(self, indx):
