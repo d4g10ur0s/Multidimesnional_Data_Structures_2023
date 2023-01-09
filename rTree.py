@@ -32,7 +32,7 @@ def area(I):
         sum += (i[1] - i[0])**2
     return math.sqrt(sum)
 
-def computeValidArea(area, info):
+def computeValidArea(area, info):                                               #DONE
     dim = len(info)
     sum = 0
     for i in range(0,dim) :
@@ -64,15 +64,17 @@ class Rnode :
         self._parent = parent
         self._leaf = leaf
 
+    def clearRoot(self):
+        self._entries = []
     def hasParentRoom(self):
         return ( self._max-1 > len(self._entries) )
     def hasRoom(self):
-        return ( self._max > len(self._entries) )
+        return ( self._max >= len(self._entries) )
     def getParent(self):
         return self._parent
 
     '''2 get the new rectangle'''
-    def getTightRectangle(self):
+    def getTightRectangle(self):                                                #DONE
         tI = []
         for i in range(0,self._dim):
             min = None
@@ -91,7 +93,7 @@ class Rnode :
         #return tight Rectangle
         return tI
     '''    New kid entry      '''
-    def adjustIntervals(self,kid,rect):
+    def adjustIntervals(self,kid,rect):                                         #DONE
         tI = None
         indx = 0
         #0. choose kid's entry
@@ -117,7 +119,7 @@ class Rnode :
         self._entries.append( (I , info) )
 
     ''' Get smallest rectangle '''
-    def smallestRectangle(self, info):
+    def smallestRectangle(self, info):                                          #DONE
         min = None
         min_child = None
         indx = 0
@@ -134,7 +136,7 @@ class Rnode :
         return min_child
 
     ''' Pick Seeds , a.k.a. choose 2 nodes that consist the largest area '''
-    def pickSeeds(self):
+    def pickSeeds(self):                                                        #DONE
         d = 0
         e1 = 0
         e2 = 0
@@ -160,7 +162,7 @@ class Rnode :
         return (e1, e2)
 
     ''' Node splitting '''
-    def nodeSplit(self,info):
+    def nodeSplit(self):                                                        #DONE
         #0. pick seeds
         e = self.pickSeeds()
         e1 = self._entries[e[0]]
@@ -175,14 +177,7 @@ class Rnode :
         e1 = [e1, ]
         e2 = [e2 , ]
         l = len(self._entries)#metavlhth
-        #0. insert new element
-        min = computeValidArea(I1, info)
-        tmin = computeValidArea(I2, info)
-        if tmin < min:
-            e1.append(info)#mazi me ti I ??
-            ''' ERROR '''
-        else:
-            e2.append(info)
+
         #1. choose sides
         while l>0:
             #   se poio tairiazei kalutera ?
@@ -219,15 +214,18 @@ class Rtree :
     _min = 2
     _max = 4
 
-    def __init__(self,dim=1,min = 2, max = 4):
+    def __init__(self,dim=1,min = 2, max = 4,info = None):                      #DONE
         self._dim = dim
         self._min = min
         self._max = max
+        if not (info==None):#if info insert
+            for i in info :
+                self.insert(i)
 
     def insert(self,info):
 
         #0. Check if tree has root
-        if len(self._nodes) == 0 :
+        if len(self._nodes) == 0:                                               #DONE
             #1. if not add first element
             a = Rnode(self._dim,self._min,self._max)
             a.installEntry(info)
@@ -236,52 +234,47 @@ class Rtree :
             #1. Find Leaf
             indx = self.chooseLeaf(info)
             lnode = self._nodes[indx]
+            #3. install E
+            self._nodes[indx].installEntry(info)
             #2. If has room
-            if lnode.hasRoom():
-                #3. install E
-                self._nodes[indx].installEntry(info)
+            if lnode.hasRoom():                                                 #DONE
                 #4. adjust tree
                 self.adjustTree(indx)
             else:
                 #3. split Node
-                new_entries = lnode.nodeSplit()
+                k = True
                 p = lnode.getParent()#old parent is new parent
-                self._nodes.pop(indx)#prepei oloi oi komvoi na meiwsoun kata 1 to num tous
-                for i in self._nodes:
-                    i.adjustPointers(indx)
-                #4. create 2 new nodes
-                if p>=indx:
-                    p=p-1
-                n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                #5. install entries
-                for i , j in new_entries[1], new_entries[3]:
-                    n1.installEntry(i)
-                    n2.installEntry(j)
-                #6. insert into nodes
-                self._nodes.append(n1)
-                self._nodes.append(n2)
+                while not (self._nodes[p].hasRoom()) or k:
+                    k = False
+                    new_entries = lnode.nodeSplit()                             #DONE
+                    if indx = 0 :
+                        self._nodes[0].clearRoot()
+                    else:
+                        self._nodes.pop(indx)#prepei oloi oi komvoi na meiwsoun kata 1 to num tous
 
-                if self._nodes[p].hasParentRoom():
+                    for i in self._nodes:
+                        i.adjustPointers(indx)
+                    #4. create 2 new nodes
+                    if p == None :                                              #if is root
+                        p=0
+                    else:
+                        if p>=indx:
+                            p=p-1
+                    n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                    n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                    #5. install entries
+                    for i , j in new_entries[1], new_entries[3]:
+                        n1.installEntry(i)
+                        n2.installEntry(j)
+                    #6. insert into nodes
+                    self._nodes.append(n1)
+                    self._nodes.append(n2)
+
                     self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
+                    self._nodes[p].adjustTree(len(self._nodes)-2)
                     self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
-                else:
-                    #loop for parents till root
-                    while not (self._nodes[p].hasRoom()):
-                        #3. split Node
-                        new_entries = self._nodes[p].nodeSplit()
-                        p1 = self._nodes[p].getParent()#old parent is new parent
-                        self._nodes.pop(indx)
-                        #4. create 2 new nodes
-                        n1 = Rnode(self._dim,self._min,self._max,parent = p1, leaf = True)
-                        n2 = Rnode(self._dim,self._min,self._max,parent = p1, leaf = True)
-                        #5. install entries
-                        for i , j in new_entries[1], new_entries[3]:
-                            n1.installEntry(i)
-                            n2.installEntry(j)
-                            #6. insert into nodes
-                            self._nodes.append(n1)
-                            self._nodes.append(n2)
+                    self._nodes[p].adjustTree(len(self._nodes)-1)
+
 
     def adjustTree(self, indx):
         #2. if root stop
@@ -294,7 +287,7 @@ class Rtree :
             self._nodes[p].adjustIntervals(indx, self._nodes[indx].getTightRectangle() )
 
     '''    returns index       '''
-    def chooseLeaf(self, info):#DONE
+    def chooseLeaf(self, info):                                                 #DONE
         indx = 0
         #1. choose root
         node = self._nodes[indx]
