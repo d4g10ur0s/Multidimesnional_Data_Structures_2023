@@ -44,6 +44,10 @@ class QuotesSpider(scrapy.Spider):
         #8elw onoma
         node = infobox.xpath('//*[@class=\"fn\"]')
         name = node.css('div::text').get()
+        if name == None :
+            if infobox.get() == None:
+                name = response.xpath("/html/body/div[3]/h1/span/text()").get()
+
         scientist['name'] = name
         #input('ftasame sto name')
         #pame gia awards
@@ -61,6 +65,8 @@ class QuotesSpider(scrapy.Spider):
             tr = infobox.xpath("//tr["+str(i)+"]")
         #end while
         #prepei na apo8hkeusw plhroforia
+        if scientist['awards']==None:
+            scientist['awards']=0
         yield self.write_file(scientist)
 
     async def parse(self, response):
