@@ -1,36 +1,7 @@
 import os
 import json
 import pandas as pd
-
-fr = {
-    'A' : 8.496,
-    'B'	: 2.072,
-    'C'	: 4.538,
-    'D'	: 3.384,
-    'E'	: 11.160,
-    'F'	: 1.812,
-    'G'	: 2.470,
-    'H'	: 3.003,
-    'I'	: 7.544,
-    'J'	: 0.196,
-    'K'	: 1.101,
-    'L'	: 5.489,
-    'M'	: 3.012,
-    'N'	: 6.654,
-    'O'	: 7.163,
-    'P'	: 3.167,
-    'Q'	: 0.196,
-    'R'	: 7.580,
-    'S'	: 5.735,
-    'T'	: 6.950,
-    'U'	: 3.630,
-    'V'	: 1.007,
-    'W'	: 1.289,
-    'X'	: 0.290,
-    'Y'	:1.777,
-    'Z'	: 0.272,
-}
-
+import numpy as np
 
 def vectorize(name,max):
     nname = []
@@ -44,7 +15,7 @@ def vectorize(name,max):
 def main():
     path = os.getcwd()
     path+="\\tutorial\\scientists"
-    max = 0
+    max = 0#epilegw thn megisth timh apo encoding gia na yparxei sto diasthma [0,1]
     indx = 1
     first = True
     scientists = None
@@ -60,7 +31,18 @@ def main():
             scientists.loc[indx] = scient.loc[0]
             indx+=1
 
-    print(scientists.iloc[:])
+    '''     dhmiourgia dianusmatwn       '''
+    temp = []
+    for i in range(0,indx):
+        temp.append(pd.DataFrame(scientists.iloc[i]["processed_name"])/max)
+    temp = pd.concat(temp,axis=1, ignore_index=True)
+    temp.fillna(0,inplace=True)#opou nan vazw 0
+
+    '''   epanatopo8ethsh se arxiko DataFrame   '''
+    for i in range(0,indx):
+        scientists.at[i,"processed_name"] = temp.iloc[:][i]
+
+    print(scientists.iloc[10])
 
 if __name__ == "__main__" :
     main()
