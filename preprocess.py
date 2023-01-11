@@ -1,5 +1,6 @@
 import os
 import json
+import pandas as pd
 
 fr = {
     'A' : 8.496,
@@ -31,20 +32,35 @@ fr = {
 }
 
 
-def vectorize(name):
+def vectorize(name,max):
     nname = []
     for i in name :
-        nname.append(fr[upper(i)])
-    return nname
+        nname.append(ord(i))
+        if max < ord(i):
+            max = ord(i)
+    return [nname, max]
 
 
 def main():
     path = os.getcwd()
     path+="\\tutorial\\scientists"
+    max = 0
+    indx = 1
+    first = True
+    scientists = None
     for sc in os.listdir(path):
-        f = open(path + "\\"+sc,"r+")
-        scient = json.load(f)
-        print(str(scient))
+        scient = pd.read_json(path + "\\"+sc)
+        #scient = json.load(f)
+        pname , max = vectorize(scient.iloc[0]['name'], max)
+        scient.insert(3,"processed_name", [pname], True)
+        if first == True :
+            scientists = scient
+            first = False
+        else:
+            scientists.loc[indx] = scient.loc[0]
+            indx+=1
+
+    print(scientists.iloc[:])
 
 if __name__ == "__main__" :
     main()

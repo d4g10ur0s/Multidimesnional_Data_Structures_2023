@@ -3,6 +3,8 @@ import os
 import json
 import re
 
+import pandas as pd
+
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
@@ -16,17 +18,19 @@ class QuotesSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def write_file(self,scientist):
+        scientist = pd.DataFrame(data=[scientist])
         path = os.getcwd()
         try :
-            to_write = json.dumps(scientist)
             if os.path.exists(path + "\\scientists"):
                 pass
             else:
                 os.mkdir(path + "\\scientists")
-            f = open(path + "\\scientists\\"+scientist['name']+".json","w+")
-            f.write(to_write)
+
+            f = open(path + "\\scientists\\"+scientist.loc[0]["name"]+".json","w+")
+            scientist.to_json(f)
+            #input('meta')
             f.close()
-        except :
+        except ValueError:
             pass
 
     async def parse_2(self,response):
