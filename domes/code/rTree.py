@@ -1,4 +1,5 @@
 import math
+import time
 
 def getJ(e1, e2):
     tI = []
@@ -64,6 +65,9 @@ class Rnode :
         self._parent = parent
         self._leaf = leaf
 
+    def getNodes(self):
+        for i in self._entries:
+            print(str(i))
     def clearRoot(self):
         self._entries = []
     def hasParentRoom(self):
@@ -74,6 +78,8 @@ class Rnode :
         return self._parent
     def isLeaf(self):
         return self._leaf
+    def setNotLeaf(self):
+        self._leaf=False
     def appendEntry(self,entry):
         self._entries.append(entry)
 
@@ -85,6 +91,7 @@ class Rnode :
             max = None
             #compute tight interval
             for j in self._entries :
+                '''provlhma einai pws exei info ke oxi tuple'''
                 intrv = j[0]
                 intrv = intrv[i]
                 #compute min
@@ -113,6 +120,7 @@ class Rnode :
     '''    set kid interval    '''
     def newKid(self,kid):
         self._entries.append(kid)
+        print(str(kid))
 
     def installEntry(self, info) :
         #0. create intervals
@@ -243,8 +251,16 @@ class Rtree :
         self._min = min
         self._max = max
         if not (info==None):#if info insert
+            it=0
             for i in info :
+                st = time.time()
                 self.insert(i)
+                et = time.time()
+                elapsed_time = et - st
+                print("*"*5 +" "*2 + "Item : " + str(it) +" " * 2 + "*"*5+"\n" * 2)
+                print('Execution time:', elapsed_time, 'seconds')
+                print("*"*5 +" "*2 + "      " + " " * 2 + "*"*5+"\n" * 2)
+                it+=1
 
     def printRTree(self,i=0):
         print("* "*10 + " Node : " + str(i) + " " + " *"*10)
@@ -280,6 +296,7 @@ class Rtree :
                 k = True
                 p = lnode.getParent()#old parent is new parent
                 while k or not(self._nodes[p].hasRoom()) :
+                    print("den kollhse")
                     if p==None and not k:
                         break
                     new_entries = lnode.nodeSplit(k)
@@ -299,6 +316,7 @@ class Rtree :
                     #ke kapws etsi to 1o spasimo 8a exei leaf, ta alla profanws oxi
                     n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
                     n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
+                    self._nodes[p].setNotLeaf()
                     #5. install entries
                     #if not k -- > den einai leaf
                     if not k :
@@ -308,24 +326,18 @@ class Rtree :
                             n2.appendEntry(i)
                     else:
                         for i in new_entries[1]:
-                            print("\n"*3+str(i) + "\n"*3)
-                            input('a')
                             n1.installEntry(i)
                         for i in new_entries[3]:
-                            print("\n"*3+str(i) + "\n"*3)
-                            input('a')
                             n2.installEntry(i)
+                    k = False#vasikh metavlhth gia elegxo
                     #6. insert into nodes
                     self._nodes.append(n1)
                     self._nodes.append(n2)
 
-                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
-                    self.adjustTree(len(self._nodes)-2)
+                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-1) )
+                    self.adjustTree(len(self._nodes)-1)
                     self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
                     self.adjustTree(len(self._nodes)-1)
-
-                    k = False#vasikh metavlhth gia elegxo
-        self.printRTree()
 
     def adjustTree(self, indx):
         #2. if root stop
@@ -344,6 +356,7 @@ class Rtree :
         node = self._nodes[indx]
         #2. is leaf?
         while not node.isLeaf():
+            print("den kollhse")
             indx = node.smallestRectangle(info)
             node = self._nodes[indx]
         #3. return index to leaf
