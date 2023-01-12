@@ -33,7 +33,7 @@ def area(I):
     return math.sqrt(sum)
 
 def computeValidArea(area, info):                                               #DONE
-    dim = len(info)
+    dim = len(info)-1
     sum = 0
     for i in range(0,dim) :
         interval = area[i]
@@ -72,6 +72,8 @@ class Rnode :
         return ( self._max >= len(self._entries) )
     def getParent(self):
         return self._parent
+    def isLeaf(self):
+        return self._leaf
 
     '''2 get the new rectangle'''
     def getTightRectangle(self):                                                #DONE
@@ -140,8 +142,8 @@ class Rnode :
         d = 0
         e1 = 0
         e2 = 0
-        for i in range(0,len(self._entries))
-            for j in range(0,len(self._entries))
+        for i in range(0,len(self._entries)):
+            for j in range(0,len(self._entries)):
                 #if i == j pass
                 if i==j or i<j:
                     pass
@@ -206,6 +208,15 @@ class Rnode :
                 te.append(e)
             self._entries = te
 
+    def printNode(self):
+        for i in self._entries:
+            print(str(i[0]))
+    def getChildren(self):
+        c = []
+        for i in self._entries:
+            c.append(i[1])
+        return c
+
 #the Rtree
 class Rtree :
 
@@ -214,13 +225,24 @@ class Rtree :
     _min = 2
     _max = 4
 
-    def __init__(self,dim=1,min = 2, max = 4,info = None):                      #DONE
+
+    def __init__(self,dim=1,info = None,min = 2, max = 4):                      #DONE
         self._dim = dim
         self._min = min
         self._max = max
         if not (info==None):#if info insert
             for i in info :
                 self.insert(i)
+
+    def printRTree(self,i=0):
+        print("* "*10 + " Node : " + str(i) + " " + " *"*10)
+        #self._nodes[i].printNode()
+        print("\n"*3)
+        for j in self._nodes[i].getChildren():
+            if self._dim == len(j)-1:
+                print(str(j))
+            else:
+                self.printRTree(j)
 
     def insert(self,info):
 
@@ -244,10 +266,11 @@ class Rtree :
                 #3. split Node
                 k = True
                 p = lnode.getParent()#old parent is new parent
-                while not (self._nodes[p].hasRoom()) or k:
-                    k = False
+                while k or not(self._nodes[p].hasRoom()) :
+                    if p==None:
+                        break
                     new_entries = lnode.nodeSplit()                             #DONE
-                    if indx = 0 :
+                    if indx == 0 :
                         self._nodes[0].clearRoot()
                     else:
                         self._nodes.pop(indx)#prepei oloi oi komvoi na meiwsoun kata 1 to num tous
@@ -260,8 +283,10 @@ class Rtree :
                     else:
                         if p>=indx:
                             p=p-1
-                    n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
-                    n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = True)
+                    #ke kapws etsi to 1o spasimo 8a exei leaf, ta alla profanws oxi
+                    n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
+                    n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
+                    k = False
                     #5. install entries
                     for i , j in new_entries[1], new_entries[3]:
                         n1.installEntry(i)
@@ -293,7 +318,7 @@ class Rtree :
         node = self._nodes[indx]
         #2. is leaf?
         while not node.isLeaf():
-            indx = node.smallestRectangle()
+            indx = node.smallestRectangle(info)
             node = self._nodes[indx]
         #3. return index to leaf
         return indx

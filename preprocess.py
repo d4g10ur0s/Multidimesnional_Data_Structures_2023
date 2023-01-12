@@ -3,6 +3,8 @@ import json
 import pandas as pd
 import numpy as np
 
+from domes.code.rTree import Rtree as rt
+
 def vectorize(name,max):
     nname = []
     for i in name :
@@ -10,7 +12,6 @@ def vectorize(name,max):
         if max < ord(i):
             max = ord(i)
     return [nname, max]
-
 
 def main():
     path = os.getcwd()
@@ -42,7 +43,14 @@ def main():
     for i in range(0,indx):
         scientists.at[i,"processed_name"] = temp.iloc[:][i]
 
-    print(scientists.iloc[10])
+    ''' from dataframe to list '''
+    temp = []
+    for i in range(0,indx):
+        tdf = scientists.loc[i,"processed_name"]
+        temp.append( tdf.iloc[:].values.tolist() + scientists.loc[i,["awards","name"]].values.tolist() )
+
+    a = rt(dim = len(temp[0]) - 1, info = temp)
+    a.printRTree()
 
 if __name__ == "__main__" :
     main()
