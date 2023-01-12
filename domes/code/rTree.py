@@ -28,7 +28,7 @@ def getJ(e1, e2):
 
 def area(I):
     sum = 0
-    for i in range(0,len(I)):
+    for i in I:
         sum += (i[1] - i[0])**2
     return math.sqrt(sum)
 
@@ -110,7 +110,7 @@ class Rnode :
 
     '''    set kid interval    '''
     def newKid(self,kid):
-        self._entries[indx].append(kid)
+        self._entries.append(kid)
 
     def installEntry(self, info) :
         #0. create intervals
@@ -172,24 +172,28 @@ class Rnode :
         #1. form intervals
         I1 = []
         I2 = []
-        for i,j in e1[0],e2[0]:
+        for i in e1[0]:
             I1.append( (i[0]-self._min, i[1]+self._min) )
-            I2.append( (j[0]-self._min, j[1]+self._min) )
+        for i in e2[0]:
+            I2.append( (i[0]-self._min, i[1]+self._min) )
 
-        e1 = [e1, ]
-        e2 = [e2 , ]
+        e1 = [e1[1], ]
+        e2 = [e2[1] , ]
         l = len(self._entries)#metavlhth
 
         #1. choose sides
         while l>0:
             #   se poio tairiazei kalutera ?
             #2. pickNext
-            min = computeValidArea(I1, self._entries[0])
-            tmin = computeValidArea(I2, self._entries[0])
-            if tmin < min:
-                e1.append(self._entries.pop(0))
+            t = self._entries.pop(0)
+            '''edw paizei malakeia'''
+            min = computeValidArea(I1, t[1])
+            tmin = computeValidArea(I2, t[1])
+
+            if tmin <= min:
+                e1.append(t[1])
             else:
-                e2.append(self._entries.pop(0))
+                e2.append(t[1])
 
             l = len(self._entries)
         return (I1 , e1, I2 , e2)
@@ -238,9 +242,11 @@ class Rtree :
         print("* "*10 + " Node : " + str(i) + " " + " *"*10)
         #self._nodes[i].printNode()
         print("\n"*3)
+        print(len(self._nodes[i].getChildren()))
         for j in self._nodes[i].getChildren():
             if self._dim == len(j)-1:
                 print(str(j))
+                pass
             else:
                 self.printRTree(j)
 
@@ -267,9 +273,9 @@ class Rtree :
                 k = True
                 p = lnode.getParent()#old parent is new parent
                 while k or not(self._nodes[p].hasRoom()) :
-                    if p==None:
+                    if p==None and not k:
                         break
-                    new_entries = lnode.nodeSplit()                             #DONE
+                    new_entries = lnode.nodeSplit()
                     if indx == 0 :
                         self._nodes[0].clearRoot()
                     else:
@@ -288,18 +294,20 @@ class Rtree :
                     n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
                     k = False
                     #5. install entries
-                    for i , j in new_entries[1], new_entries[3]:
+                    '''edw paizei malakeia'''
+                    for i in new_entries[1]:
                         n1.installEntry(i)
-                        n2.installEntry(j)
+                    for i in new_entries[3]:
+                        n2.installEntry(i)
                     #6. insert into nodes
                     self._nodes.append(n1)
                     self._nodes.append(n2)
 
                     self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
-                    self._nodes[p].adjustTree(len(self._nodes)-2)
+                    self.adjustTree(len(self._nodes)-2)
                     self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
-                    self._nodes[p].adjustTree(len(self._nodes)-1)
-
+                    self.adjustTree(len(self._nodes)-1)
+        self.printRTree()
 
     def adjustTree(self, indx):
         #2. if root stop
