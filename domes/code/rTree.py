@@ -74,6 +74,8 @@ class Rnode :
         return self._parent
     def isLeaf(self):
         return self._leaf
+    def appendEntry(self,entry):
+        self._entries.append(entry)
 
     '''2 get the new rectangle'''
     def getTightRectangle(self):                                                #DONE
@@ -164,7 +166,7 @@ class Rnode :
         return (e1, e2)
 
     ''' Node splitting '''
-    def nodeSplit(self):                                                        #DONE
+    def nodeSplit(self,leaf):                                                        #DONE
         #0. pick seeds
         e = self.pickSeeds()
         e1 = self._entries[e[0]]
@@ -186,14 +188,23 @@ class Rnode :
             #   se poio tairiazei kalutera ?
             #2. pickNext
             t = self._entries.pop(0)
-            '''edw paizei malakeia'''
-            min = computeValidArea(I1, t[1])
-            tmin = computeValidArea(I2, t[1])
-
-            if tmin <= min:
-                e1.append(t[1])
+            min = getJ(I1, t[0])
+            tmin = getJ(I2, t[0])
+            '''
+                to provlhma einai otan spaw parent
+                8a prepei na mpoun (I , cp)
+                to install entry den mporei na ginei gia cp
+            '''
+            if leaf :
+                if (tmin <= min and len(e1)<=self._max) or len(e2)==self._max:
+                    e1.append(t[1])
+                else:
+                    e2.append(t[1])
             else:
-                e2.append(t[1])
+                if (tmin <= min and len(e1)<=self._max) or len(e2)==self._max:
+                    e1.append(t[0])
+                else:
+                    e2.append(t[0])
 
             l = len(self._entries)
         return (I1 , e1, I2 , e2)
@@ -216,10 +227,7 @@ class Rnode :
         for i in self._entries:
             print(str(i[0]))
     def getChildren(self):
-        c = []
-        for i in self._entries:
-            c.append(i[1])
-        return c
+        return self._entries
 
 #the Rtree
 class Rtree :
@@ -244,9 +252,8 @@ class Rtree :
         print("\n"*3)
         print(len(self._nodes[i].getChildren()))
         for j in self._nodes[i].getChildren():
-            if self._dim == len(j)-1:
+            if not(isinstance(j,int)):
                 print(str(j))
-                pass
             else:
                 self.printRTree(j)
 
@@ -275,7 +282,7 @@ class Rtree :
                 while k or not(self._nodes[p].hasRoom()) :
                     if p==None and not k:
                         break
-                    new_entries = lnode.nodeSplit()
+                    new_entries = lnode.nodeSplit(k)
                     if indx == 0 :
                         self._nodes[0].clearRoot()
                     else:
@@ -292,13 +299,22 @@ class Rtree :
                     #ke kapws etsi to 1o spasimo 8a exei leaf, ta alla profanws oxi
                     n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
                     n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
-                    k = False
                     #5. install entries
-                    '''edw paizei malakeia'''
-                    for i in new_entries[1]:
-                        n1.installEntry(i)
-                    for i in new_entries[3]:
-                        n2.installEntry(i)
+                    #if not k -- > den einai leaf
+                    if not k :
+                        for i in new_entries[1]:
+                            n1.appendEntry(i)
+                        for i in new_entries[3]:
+                            n2.appendEntry(i)
+                    else:
+                        for i in new_entries[1]:
+                            print("\n"*3+str(i) + "\n"*3)
+                            input('a')
+                            n1.installEntry(i)
+                        for i in new_entries[3]:
+                            print("\n"*3+str(i) + "\n"*3)
+                            input('a')
+                            n2.installEntry(i)
                     #6. insert into nodes
                     self._nodes.append(n1)
                     self._nodes.append(n2)
@@ -307,6 +323,8 @@ class Rtree :
                     self.adjustTree(len(self._nodes)-2)
                     self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
                     self.adjustTree(len(self._nodes)-1)
+
+                    k = False#vasikh metavlhth gia elegxo
         self.printRTree()
 
     def adjustTree(self, indx):
