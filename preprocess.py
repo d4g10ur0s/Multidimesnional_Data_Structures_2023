@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
-
+import time
 from domes.code.rTree import Rtree as rt
 
 def vectorize(name,max):
@@ -49,8 +49,10 @@ def main():
         tdf = scientists.loc[i,"processed_name"]
         temp.append( tdf.iloc[:].values.tolist() + scientists.loc[i,["awards","name"]].values.tolist() )
 
-    a = rt(dim = len(temp[0]) - 1, info = temp)
-    a.printRTree()
+    choice = input("Select : " + "\n" + "1. RTree"+ "\n")
+    if int(choice)==1 :
+        a = rt(dim = len(temp[0]) - 1, info = temp)
+        a.printRTree()
 
 if __name__ == "__main__" :
     main()
