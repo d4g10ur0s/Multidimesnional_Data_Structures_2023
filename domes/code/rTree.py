@@ -84,13 +84,13 @@ class Rnode :
         self._entries.append(entry)
 
     '''2 get the new rectangle'''
-    def getTightRectangle(self):                                                #DONE
+    def getTightRectangle(self):
         tI = []
         for i in range(0,self._dim):
             min = None
             max = None
             #compute tight interval
-            for j in self._entries :
+            for j in self._entries :                                            #DONE
                 '''provlhma einai pws exei info ke oxi tuple'''
                 intrv = j[0]
                 intrv = intrv[i]
@@ -120,7 +120,6 @@ class Rnode :
     '''    set kid interval    '''
     def newKid(self,kid):
         self._entries.append(kid)
-        print(str(kid))
 
     def installEntry(self, info) :
         #0. create intervals
@@ -190,8 +189,12 @@ class Rnode :
         for i in e2[0]:
             I2.append( (i[0]-self._min, i[1]+self._min) )
 
-        e1 = [e1[1], ]
-        e2 = [e2[1] , ]
+        if self._leaf :
+            e1 = [e1[1], ]
+            e2 = [e2[1] , ]
+        else:
+            e1 = [I1, ]
+            e2 = [I2, ]
         l = len(self._entries)#metavlhth
 
         #1. choose sides
@@ -228,7 +231,7 @@ class Rnode :
         if not self._leaf :
             te = []
             for i in self._entries :
-                if i[1] >= indx :
+                if i[1] > indx :
                     e = (i[0] , i[1] - 1)
                 else:
                     e = (i[0] , i[1])
@@ -302,7 +305,8 @@ class Rtree :
                 while k or not(self._nodes[p].hasRoom()) :
                     if p==None and not k:
                         break
-                    new_entries = lnode.nodeSplit()'''den allazei kapou to lnode'''
+                    #apo edw ksekina h malakeia
+                    new_entries = lnode.nodeSplit()
                     if indx == 0 :
                         self._nodes[0].clearRoot()
                     else:
@@ -322,12 +326,11 @@ class Rtree :
                     self._nodes[p].setNotLeaf()
                     #5. install entries
                     #if not k -- > den einai leaf
-                    print(str(new_entries[1]))
-                    print(str(new_entries[3]))
-                    print(str(k))
-                    input('a')
                     if not k :
                         for i in new_entries[1]:
+                            #edw symvainei h malakeia, den pernas to kid...
+                            print(str(i))
+                            input('a')
                             n1.appendEntry(i)
                         for i in new_entries[3]:
                             n2.appendEntry(i)
@@ -341,10 +344,11 @@ class Rtree :
                     self._nodes.append(n1)
                     self._nodes.append(n2)
 
-                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-1) )
-                    self.adjustTree(len(self._nodes)-1)
+                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
+                    self.adjustTree(len(self._nodes)-2)
                     self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
                     self.adjustTree(len(self._nodes)-1)
+                    lnode = self._nodes[p]
 
     def adjustTree(self, indx):
         #2. if root stop
@@ -363,7 +367,6 @@ class Rtree :
         node = self._nodes[indx]
         #2. is leaf?
         while not node.isLeaf():
-            print("den kollhse")
             indx = node.smallestRectangle(info)
             node = self._nodes[indx]
         #3. return index to leaf
