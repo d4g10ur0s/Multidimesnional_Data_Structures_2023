@@ -151,9 +151,9 @@ class Rnode :
     def pickSeeds(self):                                                        #DONE
         d = 0
         e1 = 0
-        e2 = 0
+        e2 = 1
         for i in range(0,len(self._entries)):
-            for j in range(0,len(self._entries)):
+            for j in range(1,len(self._entries)):
                 #if i == j pass
                 if i==j or i<j:
                     pass
@@ -174,11 +174,14 @@ class Rnode :
         return (e1, e2)
 
     ''' Node splitting '''
-    def nodeSplit(self,leaf):                                                        #DONE
+    def nodeSplit(self):                                                        #DONE
         #0. pick seeds
         e = self.pickSeeds()
         e1 = self._entries[e[0]]
         e2 = self._entries[e[1]]
+        #pop the elements, no doubles
+        self._entries.pop(e[0])
+        self._entries.pop(e[1]-1)
         #1. form intervals
         I1 = []
         I2 = []
@@ -196,14 +199,15 @@ class Rnode :
             #   se poio tairiazei kalutera ?
             #2. pickNext
             t = self._entries.pop(0)
-            min = getJ(I1, t[0])
-            tmin = getJ(I2, t[0])
+            min = area(getJ(I1, t[0]))
+            tmin = area(getJ(I2, t[0]))
             '''
                 to provlhma einai otan spaw parent
                 8a prepei na mpoun (I , cp)
                 to install entry den mporei na ginei gia cp
             '''
-            if leaf :
+
+            if self._leaf :
                 if (tmin <= min and len(e1)<=self._max) or len(e2)==self._max:
                     e1.append(t[1])
                 else:
@@ -296,10 +300,9 @@ class Rtree :
                 k = True
                 p = lnode.getParent()#old parent is new parent
                 while k or not(self._nodes[p].hasRoom()) :
-                    print("den kollhse")
                     if p==None and not k:
                         break
-                    new_entries = lnode.nodeSplit(k)
+                    new_entries = lnode.nodeSplit()'''den allazei kapou to lnode'''
                     if indx == 0 :
                         self._nodes[0].clearRoot()
                     else:
@@ -319,6 +322,10 @@ class Rtree :
                     self._nodes[p].setNotLeaf()
                     #5. install entries
                     #if not k -- > den einai leaf
+                    print(str(new_entries[1]))
+                    print(str(new_entries[3]))
+                    print(str(k))
+                    input('a')
                     if not k :
                         for i in new_entries[1]:
                             n1.appendEntry(i)
