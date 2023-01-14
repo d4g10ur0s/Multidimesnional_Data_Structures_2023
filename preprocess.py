@@ -3,7 +3,8 @@ import json
 import pandas as pd
 import numpy as np
 import time
-from domes.code.rTree import Rtree as rt
+import csv
+# from domes.code.rTree import Rtree as rt
 
 def vectorize(name,max):
     nname = []
@@ -45,14 +46,21 @@ def main():
 
     ''' from dataframe to list '''
     temp = []
-    for i in range(0,indx):
-        tdf = scientists.loc[i,"processed_name"]
-        temp.append( tdf.iloc[:].values.tolist() + scientists.loc[i,["awards","name"]].values.tolist() )
+    with open('data.csv', 'w', newline="",encoding="utf-8" ) as myfile:
+        wr = csv.writer(myfile)
+        for i in range(0,indx):
+            tdf = scientists.loc[i,"processed_name"]
+            temp = np.concatenate( (tdf, scientists.loc[i,["awards","name"]].values.tolist()),axis=0 )
+            wr.writerows([temp])
 
-    choice = input("Select : " + "\n" + "1. RTree"+ "\n")
-    if int(choice)==1 :
-        a = rt(dim = len(temp[0]) - 1, info = temp)
-        a.printRTree()
+    df = pd.read_csv('data.csv')
+    df.transpose()
+    df = df.T
+    df.to_csv('data1.csv',header=False)
+    # choice = input("Select : " + "\n" + "1. RTree"+ "\n")
+    # if int(choice)==1 :
+    #     a = rt(dim = len(temp[0]) - 1, info = temp)
+    #     a.printRTree()
 
 if __name__ == "__main__" :
     main()
