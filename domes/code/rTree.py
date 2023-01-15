@@ -1,6 +1,7 @@
 import math
 import time
 
+
 def getJ(e1, e2):
     tI = []
     for i in range(0, len(e1)):
@@ -27,36 +28,16 @@ def getJ(e1, e2):
     #return tI
     return tI
 
+''' a.k.a. l2norm '''
 def area(I):
     sum = 0
     for i in I:
         sum += (i[1] - i[0])**2
     return math.sqrt(sum)
 
-def computeValidArea(area, info):                                               #DONE
-    dim = len(info)-1
-    sum = 0
-    for i in range(0,dim) :
-        interval = area[i]
-        if info[i] < interval[0] :
-            #an einai mikrotero
-            sum += (interval[0] - info[i] )**2
-        elif info[i] > interval[1]:
-            #an einai megalutero
-            sum += (info[i] - interval[1])**2
-        else:
-            #an einai anamesa den uparxei suneisfora
-            pass
-    return math.sqrt(sum)
-
 class Rnode :
 
     _entries = []
-    _dim = 0
-    _min = 0
-    _max = 0
-    _parent = None
-    _leaf = True
 
     def __init__(self,dim,min,max,parent = None, leaf = True):
         self._dim = dim
@@ -64,310 +45,273 @@ class Rnode :
         self._max = max
         self._parent = parent
         self._leaf = leaf
-
-    def getNodes(self):
-        for i in self._entries:
-            print(str(i))
+    def setEntries(self,entries):
+        self._entries=entries
     def clearRoot(self):
+        self._leaf = False
         self._entries = []
-    def hasParentRoom(self):
-        return ( self._max-1 > len(self._entries) )
-    def hasRoom(self):
-        return ( self._max >= len(self._entries) )
+    ''' NOT ROOT '''
     def getParent(self):
         return self._parent
+    def hasRoom(self):
+        return (len(self._entries) <= self._max)
     def isLeaf(self):
         return self._leaf
-    def setNotLeaf(self):
-        self._leaf=False
-    def appendEntry(self,entry):
-        self._entries.append(entry)
-
-    '''2 get the new rectangle'''
+    ''' install new entry , info must be list           LEAF                    '''
+    def installEntry(self, info) :
+        #0. create intervals
+        I = []
+        for i in range(0,self._dim):
+            I.append( (info[i] - self._min , info[i] + self._min  ) )
+        '''                 intervals  ,  data                                  '''
+        self._entries.append( (I , info) )
+    '''     set new tight rectangle             NOT LEAF                        '''
+    def setTightRectangle(self,kid,rectangle):
+        for i in range(0,len(self._entries)):
+            #find kid and set it
+            if self._entries[i][1] == kid:
+                self._entries[i] = (rectangle,kid)
+                break
+    '''     new tight rectangle                 LEAF                            '''
     def getTightRectangle(self):
         tI = []
         for i in range(0,self._dim):
             min = None
             max = None
             #compute tight interval
-            for j in self._entries :                                            #DONE
-                '''provlhma einai pws exei info ke oxi tuple'''
+            for j in self._entries :
+                #get all intervals a.k.a. I
                 intrv = j[0]
+                #i is current dimension
                 intrv = intrv[i]
                 #compute min
-                if min == None or intrv[0]<=min:
+                if min == None or intrv[0]<min:
                     min = intrv[0]
                 #compute max
-                if max == None or intrv[1] >= max:
+                if max == None or intrv[1] > max:
                     max = intrv[1]
+            #set tight interval for dimension i
             tI.append( (min , max) )
         #return tight Rectangle
         return tI
-    '''    New kid entry      '''
-    def adjustIntervals(self,kid,rect):                                         #DONE
-        tI = None
-        indx = 0
-        #0. choose kid's entry
-        for i in self._entries:
-            if i[1] == kid:
-                tI = i[0]
-                break
-            else:
-                indx+=1
-        #1. update entry
-        self._entries[indx] = (rect , kid)
-
-    '''    set kid interval    '''
-    def newKid(self,kid):
-        self._entries.append(kid)
-
-    def installEntry(self, info) :
-        #0. create intervals
-        I = []
-        for i in range(0,self._dim):
-            I.append( (info[i] - self._min , info[i] + self._min  ) )
-        '''                 intervals  ,  data                 '''
-        self._entries.append( (I , info) )
-
-    ''' Get smallest rectangle '''
-    def smallestRectangle(self, info):                                          #DONE
-        min = None
+    ''' get the child that needs the least enlargement            NOT LEAF      '''
+    def getLeastEnlargement(self,info):
         min_child = None
-        indx = 0
-        #0. for each entry
-        for e in self._entries :
-            tmin = computeValidArea(e[0], info)#l2 norm of starting point ,  ending point
-            if min==None or tmin < min:
-                min = tmin
-                min_child = e[1]
-            else:
-                pass
-            indx+=1
-        #1. return pointer of child
+        min = None
+        for i in self._entries:
+            if min==None:
+                min_child = i[1]
+                min = area(i[0])
+            elif min>area(i[0]):
+                min_child = i[1]
         return min_child
 
     ''' Pick Seeds , a.k.a. choose 2 nodes that consist the largest area '''
     def pickSeeds(self):                                                        #DONE
-        d = 0
+        d = None
         e1 = 0
         e2 = 1
         for i in range(0,len(self._entries)):
-            for j in range(1,len(self._entries)):
-                #if i == j pass
-                if i==j or i<j:
-                    pass
-                else:
-                    #compute d = area(J) - area(E1.I) - area(E2.I)
-                    #0. construct J
-                    i1 = self._entries[i]
-                    i2 = self._entries[j]
-                    J = getJ(i1[0] , i2[0])
-                    #1. compute td
-                    td = area(J) - area(i1[0]) - area(i2[0])
-                    if d < td:
-                        #2. get max d
-                        d = td
-                        e1 = i
-                        e2 = j
+            for j in range(i+1,len(self._entries)):
+                #compute d = area(J) - area(E1.I) - area(E2.I)
+                #0. construct J
+                i1 = self._entries[i]
+                i2 = self._entries[j]
+                J = getJ(i1[0] , i2[0])
+                #1. compute td
+                td = area(J) - area(i1[0]) - area(i2[0])
+                if d==None or d < td:
+                    #2. get max d
+                    d = td
+                    e1 = i
+                    e2 = j
         #d has been computed, return indexes
         return (e1, e2)
-
+    '''      pick next for assignment                                   ANY     '''
+    def pickNext(self,c1,c2):
+        indx = 0
+        tindx = 0
+        diff = None
+        tc1 = None
+        tc2 = None
+        for i in self._entries:
+            ttc1 = getJ(c1,i[0])
+            ttc2 = getJ(c2,i[0])
+            if diff == None or diff < ( area(ttc1) - area(ttc2) )**2 :
+                diff = ( area(ttc1) - area(ttc2) )**2
+                tc1 = ttc1
+                tc2 = ttc2
+                indx = tindx
+            tindx+=1
+        return tc1,tc2,indx
     ''' Node splitting '''
     def nodeSplit(self):                                                        #DONE
         #0. pick seeds
         e = self.pickSeeds()
-        e1 = self._entries[e[0]]
-        e2 = self._entries[e[1]]
+        #1. create 2 groups
+        e1 = [self._entries[e[0]]]
+        c1 = e1[0]#covering rectangle
+        c1 = c1[0]
+        e2 = [self._entries[e[1]]]
+        c2 = e2[0]#covering rectangle
+        c2 = c2[0]
         #pop the elements, no doubles
         self._entries.pop(e[0])
-        self._entries.pop(e[1]-1)
-        #1. form intervals
-        I1 = []
-        I2 = []
-        for i in e1[0]:
-            I1.append( (i[0]-self._min, i[1]+self._min) )
-        for i in e2[0]:
-            I2.append( (i[0]-self._min, i[1]+self._min) )
-
-        if self._leaf :
-            e1 = [e1[1], ]
-            e2 = [e2[1] , ]
+        if e[1]<e[0]:
+            self._entries.pop(e[1])
         else:
-            e1 = [I1, ]
-            e2 = [I2, ]
-        l = len(self._entries)#metavlhth
+            self._entries.pop(e[1]-1)
+                #2. fill groups with entries
 
-        #1. choose sides
-        while l>0:
-            #   se poio tairiazei kalutera ?
-            #2. pickNext
-            t = self._entries.pop(0)
-            min = area(getJ(I1, t[0]))
-            tmin = area(getJ(I2, t[0]))
-            '''
-                to provlhma einai otan spaw parent
-                8a prepei na mpoun (I , cp)
-                to install entry den mporei na ginei gia cp
-            '''
-
-            if self._leaf :
-                if (tmin <= min and len(e1)<=self._max) or len(e2)==self._max:
-                    e1.append(t[1])
-                else:
-                    e2.append(t[1])
+        while len(self._entries)>0:
+            tc1,tc2,indx = self.pickNext(c1,c2)
+            #select entry for assignment
+            s=self._entries.pop(indx)
+            if len(e1)==self._max:
+                #append e2
+                e2.append(s)
+                c2 = tc2
+            elif len(e2)==self._max:
+                #append e1
+                e1.append(s)
+                c1=tc1
             else:
-                if (tmin <= min and len(e1)<=self._max) or len(e2)==self._max:
-                    e1.append(t[0])
+                #append to least enlargement
+                if area(tc1)<area(tc2):
+                    #append e1
+                    e1.append(s)
+                    c1 = tc1
                 else:
-                    e2.append(t[0])
-
-            l = len(self._entries)
-        return (I1 , e1, I2 , e2)
-
-    '''    Adjust Pointers    '''
-    def adjustPointers(self, indx):
-        if not(self._parent==None) and indx <= self._parent :
-            self._parent -=1
-        if not self._leaf :
-            te = []
-            for i in self._entries :
-                if i[1] > indx :
-                    e = (i[0] , i[1] - 1)
+                    #append e2
+                    e2.append(s)
+                    c2 = tc2
+        #returns information for 2 nodes and their covering rectangles
+        return (c1, e1,c2, e2)
+    '''     adjust pointers after splitting                                     '''
+    def adjustPointer(self,indx):
+        if not self._leaf:
+            temp = []
+            for i in self._entries:
+                if i[1] < indx:
+                    temp.append( (i[0],i[1]) )
+                elif i[1] == indx :
+                    pass
                 else:
-                    e = (i[0] , i[1])
-                te.append(e)
-            self._entries = te
+                    temp.append( (i[0],i[1]-1) )
+            self._entries = temp
+
+    def updateParent(self,c1,k1,c2,k2):
+        self._entries.append((c1,k1))
+        self._entries.append((c2,k2))
 
     def printNode(self):
         for i in self._entries:
             print(str(i[0]))
+
     def getChildren(self):
-        return self._entries
+        ch = []
+        for i in self._entries:
+            ch.append(i[1])
+        return ch
 
 #the Rtree
 class Rtree :
-
-    _nodes = []
-    _dim = 0
-    _min = 2
-    _max = 4
-
-
-    def __init__(self,dim=1,info = None,min = 2, max = 4):                      #DONE
+    infolen = 0
+    def __init__(self,dim=1,info = None,min = 2, max = 4):
         self._dim = dim
         self._min = min
         self._max = max
-        if not (info==None):#if info insert
-            it=0
+        self._nodes = None
+        ''' info must be a list '''
+        if not(info==None):
+            indx = 0
             for i in info :
-                st = time.time()
+                indx+=1
+                print("*"*5 + " " + str(indx) + " " + "*"*5)
                 self.insert(i)
-                et = time.time()
-                elapsed_time = et - st
-                print("*"*5 +" "*2 + "Item : " + str(it) +" " * 2 + "*"*5+"\n" * 2)
-                print('Execution time:', elapsed_time, 'seconds')
-                print("*"*5 +" "*2 + "      " + " " * 2 + "*"*5+"\n" * 2)
-                it+=1
+                #self.printRTree()
 
     def printRTree(self,i=0):
         print("* "*10 + " Node : " + str(i) + " " + " *"*10)
         #self._nodes[i].printNode()
-        print("\n"*3)
-        print(len(self._nodes[i].getChildren()))
+        print("\n")
         for j in self._nodes[i].getChildren():
             if not(isinstance(j,int)):
                 print(str(j))
+                self.infolen+=1
             else:
                 self.printRTree(j)
-
+        if i ==0:
+            print("There are : " + str(self.infolen) + " \n")
     def insert(self,info):
-
-        #0. Check if tree has root
-        if len(self._nodes) == 0:                                               #DONE
-            #1. if not add first element
-            a = Rnode(self._dim,self._min,self._max)
-            a.installEntry(info)
-            self._nodes.append(a)
+        #0. if tree has not formed
+        if self._nodes==None :
+            self._nodes = []
+            self._nodes.append(Rnode(dim=self._dim,min=self._min,max=self._max))
+            self._nodes[0].installEntry(info)
         else:
-            #1. Find Leaf
-            indx = self.chooseLeaf(info)
-            lnode = self._nodes[indx]
-            #3. install E
-            self._nodes[indx].installEntry(info)
-            #2. If has room
-            if lnode.hasRoom():                                                 #DONE
-                #4. adjust tree
-                self.adjustTree(indx)
+            #1. invoke choose leaf, returns index
+            lindx = self.chooseLeaf(info)
+            self._nodes[lindx].installEntry(info)
+            #2. if has room just adjust
+            if self._nodes[lindx].hasRoom():
+                self.adjustTree(lindx)
+            #2. if has not room , split
             else:
-                #3. split Node
-                k = True
-                p = lnode.getParent()#old parent is new parent
-                while k or not(self._nodes[p].hasRoom()) :
-                    if p==None and not k:
-                        break
-                    #apo edw ksekina h malakeia
-                    new_entries = lnode.nodeSplit()
-                    if indx == 0 :
-                        self._nodes[0].clearRoot()
+                p=None
+                while p==None or not(self._nodes[p].hasRoom()):
+                    lnode = None
+                    if lindx > 0 :
+                        lnode=self._nodes.pop(lindx)
                     else:
-                        self._nodes.pop(indx)#prepei oloi oi komvoi na meiwsoun kata 1 to num tous
+                        lnode=self._nodes[lindx]
 
-                    for i in self._nodes:
-                        i.adjustPointers(indx)
-                    #4. create 2 new nodes
-                    if p == None :                                              #if is root
+                    p=lnode.getParent()
+                    tobeleaf = lnode.isLeaf()
+                    c1,e1,c2,e2 = lnode.nodeSplit()
+                    if not(p==None) and p >= lindx :
+                        p=p-1
+                    if p==None:
                         p=0
-                    else:
-                        if p>=indx:
-                            p=p-1
-                    #ke kapws etsi to 1o spasimo 8a exei leaf, ta alla profanws oxi
-                    n1 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
-                    n2 = Rnode(self._dim,self._min,self._max,parent = p, leaf = k)
-                    self._nodes[p].setNotLeaf()
-                    #5. install entries
-                    #if not k -- > den einai leaf
-                    if not k :
-                        for i in new_entries[1]:
-                            #edw symvainei h malakeia, den pernas to kid...
-                            print(str(i))
-                            input('a')
-                            n1.appendEntry(i)
-                        for i in new_entries[3]:
-                            n2.appendEntry(i)
-                    else:
-                        for i in new_entries[1]:
-                            n1.installEntry(i)
-                        for i in new_entries[3]:
-                            n2.installEntry(i)
-                    k = False#vasikh metavlhth gia elegxo
-                    #6. insert into nodes
+                        #root is not leaf any more
+                        self._nodes[p].clearRoot()
+                    #adjust index because of pop
+                    self.adjustPointers(lindx)
+                    #3. create 2 new nodes
+                    n1 = Rnode(dim=self._dim,min=self._min,max=self._max,parent=p,leaf=tobeleaf)
+                    n1.setEntries(e1)
+                    n2 = Rnode(dim=self._dim,min=self._min,max=self._max,parent=p,leaf=tobeleaf)
+                    n2.setEntries(e2)
+                    #update parent with covering rectangles
+                    self._nodes[p].updateParent(c1,len(self._nodes),c2,len(self._nodes)+1)
                     self._nodes.append(n1)
                     self._nodes.append(n2)
+                    #meta paw se parent an den exei xwro
+                    lindx = p
 
-                    self._nodes[p].newKid( (new_entries[0], len(self._nodes)-2) )
-                    self.adjustTree(len(self._nodes)-2)
-                    self._nodes[p].newKid( (new_entries[2], len(self._nodes)-1) )
-                    self.adjustTree(len(self._nodes)-1)
-                    lnode = self._nodes[p]
-
-    def adjustTree(self, indx):
-        #2. if root stop
-        if indx == 0:
-            return 0
-        else:
-            #3. vres patera
-            p = self._nodes[indx].getParent()
-            #3. adjust rectangles
-            self._nodes[p].adjustIntervals(indx, self._nodes[indx].getTightRectangle() )
-
-    '''    returns index       '''
-    def chooseLeaf(self, info):                                                 #DONE
+    ''' returns index to leaf node '''
+    def chooseLeaf(self,info):                                                  #DONE
+        #1. set node to be root
         indx = 0
-        #1. choose root
-        node = self._nodes[indx]
-        #2. is leaf?
-        while not node.isLeaf():
-            indx = node.smallestRectangle(info)
-            node = self._nodes[indx]
-        #3. return index to leaf
+        #2. select a leaf node
+        while not(self._nodes[indx].isLeaf()):
+            indx = self._nodes[indx].getLeastEnlargement(info)
+        #3. return index to leaf node
         return indx
+
+    ''' adjust tree '''
+    def adjustTree(self,indx1):
+        #if no split
+        #1. if root stop
+        if indx1==0:
+            pass
+        else:
+            #2. get parent
+            p = self._nodes[indx1].getParent()
+            #2. set tight rectangle
+            self._nodes[p].setTightRectangle(indx1, self._nodes[indx1].getTightRectangle())
+
+    ''' adjust pointers after splitting '''
+    def adjustPointers(self,indx):
+        for i in self._nodes:
+            i.adjustPointer(indx)
