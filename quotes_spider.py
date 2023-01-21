@@ -2,7 +2,7 @@ import scrapy
 import os
 import json
 import re
-
+import time
 import pandas as pd
 
 
@@ -14,8 +14,34 @@ class QuotesSpider(scrapy.Spider):
         urls = [
             'https://en.wikipedia.org/wiki/List_of_computer_scientists',
         ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+        wurls = [
+            'https://thesaurus.yourdictionary.com/education',
+        ]
+        for url in wurls:
+            yield scrapy.Request(url=url, callback=self.parse_words)
+        '''for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)'''
+
+    async def parse_words(self,response):
+        a = response.xpath("//*[contains(@class,'synonym-link')]/text()")
+        words = []
+        for b in a:
+            if len(str(b.get()))>2:
+                words.append(str(b.get()))
+        try :
+            path = os.getcwd()
+            if os.path.exists(path + "\\words"):
+                pass
+            else:
+                os.mkdir(path + "\\words")
+
+            f = open(path + "\\words\\words.txt","w+")
+            for word in words :
+                f.write(word)
+                f.write("\n")
+            f.close()
+        except ValueError:
+            pass
 
     def write_file(self,scientist):
         scientist = pd.DataFrame(data=[scientist])
@@ -68,6 +94,39 @@ class QuotesSpider(scrapy.Spider):
             i+=1
             tr = infobox.xpath("//tr["+str(i)+"]")
         #end while
+
+        #gia education text
+        ps = response.css("p")
+        d = ps.getall()
+        for p in d:
+            #print(str(re.split("(</a>) |(<a)", p)))
+            p=p.replace('</a>', '')
+            p=p.replace('<a href=', ' ')
+            p=p.replace('<a ', '')
+            p=p.replace('</sup>', '')
+            p=p.replace('title=', ' ')
+            p=p.replace('<sup id=', ' ')
+            p=p.replace('</p>', '')
+            p=p.replace('<p>', '')
+            p=p.replace('<b>', '')
+            p=p.replace('</b>', '')
+            p=p.replace('</span>', '')
+            p=p.replace('<span>', '')
+            p=p.replace('class=', ' ')
+            p=p.replace('</i>', '')
+            p=p.replace('<i>', '')
+            p=p.replace('<', '')
+            p=p.replace('>', '')
+            for i in range(0,50):
+                p=p.replace("["+str(i)+"]" , '')
+
+            print(str(p.strip()))
+            #p = re.sub('\"*[a-z,A-Z,/,\,_,-,=,:]*\"','',p)
+            p = re.sub('\"*[a-z,A-Z,/,\,_,-,=,:]*\"','',p)
+            p = re.sub('#*[a-z,A-Z,_,:,0-9]+\-[0-9]*','',p)
+            #p = re.sub('[a-z,A-Z,_,]+\-[0-9]+','',p)
+            print("*"*25)
+            print(str(p.strip()))
         #prepei na apo8hkeusw plhroforia
         if scientist['awards']==None:
             scientist['awards']=0
