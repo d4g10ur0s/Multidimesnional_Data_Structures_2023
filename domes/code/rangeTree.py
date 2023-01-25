@@ -37,6 +37,7 @@ class RangeTree:
         return self.insert(median, left_subtree, right_subtree,dim)
 
     def insert(self, point, left, right, dim):
+        # print('Point',point)
         node = Node(point, left, right, dim,self._height)
         node.height = 1 + max(self.height(left), self.height(right))
         balance = self.balance(left) - self.balance(right)
@@ -90,6 +91,7 @@ class RangeTree:
                 arr.append(points.pop(c))
                 max=0
                 i=0
+                c=0
                 if len(points) == 1:
                     break
             point = points[i] 
@@ -99,34 +101,53 @@ class RangeTree:
             i+=1
         return arr
 
+   
+    def delete(self, node, point):
+        if not node:
+            return None
+        if point < node.point[:-2]:
+            print("<",point)
+            print("<",node.point)
+            node.left = self.delete(node.left, point)
+        elif point > node.point[:-2]:
+            print(">",point)
+            print(">",node.point)
+            node.right = self.delete(node.right, point)
+        else:
+            if not node.left:
+                return node.right
+            elif not node.right:
+                return node.left
 
-            
+            min_val = self.find_min(node.right)
+            node.point = min_val.point
+            node.right = self.delete(node.right, min_val.point[:-2])
+
+        node.height = 1 + max(self.height(node.left), self.height(node.right))
+        balance = self.balance(node)
+
+        if balance > 1 and self.balance(node.left) >= 0:
+            return self.right_rotate(node)
+        if balance < -1 and self.balance(node.right) <= 0:
+            return self.left_rotate(node)
+        if balance > 1 and self.balance(node.left) < 0:
+            node.left = self.left_rotate(node.left)
+            return self.right_rotate(node)
+        if balance < -1 and self.balance(node.right) > 0:
+            node.right = self.right_rotate(node.right)
+            return self.left_rotate(node)
+
+        return node
+
+    def find_min(self, node):
+        while node.left:
+            node = node.left
+        return node
+
+    
+        
 def printNode(node, string=""):
     if node is not None:
-        # printNode(node.left)
-        # print(node.point)
-        # printNode(node.right)
         print(string + "|Name:" + str(node.name))
         printNode(node.left, "\t" + string + "-left-")
         printNode(node.right, "\t" + string + "-right-")
-
-# String to Float
-def string2float(arr):
-    t= []
-    for i in range(0,len(arr)-1):
-        t.append(float(arr[i]))
-    t.append(arr[len(arr)-1])
-    return t
-
-def main():
-    filename = 'data.csv'
-    with open(filename, mode='r', encoding="utf-8") as csv_file:
-        csv_reader = pd.read_csv(csv_file, sep=';')
-        arr = []
-        for i in csv_reader.values.tolist():
-            arr.append(string2float(i[0].split(',')))
-        a = RangeTree(arr)
-        printNode(a.root)
-
-if __name__ == "__main__" :
-    main()
