@@ -57,10 +57,8 @@ class Rnode :
     def installEntry(self,info):
         I = []
         for d in range(self._dim):
-            if info[d] >= 0:
-                I.append( (info[d]*(-2), info[d]*2) )
-            else:
-                I.append( (info[d]*2, info[d]*(-2)) )
+            I.append( (info[d]-self._mval,info[d]+self._mval) )
+
         self._entries.append( (I,info) )
     ''' Gia Choose Leaf '''
     def isLeaf(self):
@@ -74,23 +72,14 @@ class Rnode :
             for d in range(self._dim):
                 dinterval = interval[d]#3. interval at dimension d
                 if info[d] < 0:#4. make the enlargement
-                    if (dinterval[0]>info[d]):
-                        if min==None or (dinterval[0]+info[d])**2<min:
-                            min = (dinterval[0]+info[d])**2
-                            child = i[1]
-                    elif (dinterval[1]<info[d]):
-                        if min==None or (dinterval[1]-info[d])**2<min:
-                            min = (dinterval[1]-info[d])**2
-                            child = i[1]
+                    tI.append( (dinterval[0]+info[d], dinterval[1]-info[d] ) )
                 else:
-                    if (dinterval[0]>info[d]):
-                        if min==None or (dinterval[0]-info[d])**2<min:
-                            min = (dinterval[0]-info[d])**2
-                            child = i[1]
-                    elif (dinterval[1]<info[d]):
-                        if min==None or (dinterval[1]+info[d])**2<min:
-                            min = (dinterval[1]+info[d])**2
-                            child = i[1]
+                    tI.append( (dinterval[0]-info[d], dinterval[1]+info[d] ) )
+                #compute area
+                a = area(tI)
+                if min == None or min < a:
+                    min = a
+                    child = i[1]
             #end for d in dimension range
         #end for i in self._entries
         return child
@@ -103,13 +92,13 @@ class Rnode :
             for j in self._entries:
                 interval = j[0]
                 current_interval = interval[i]
-                if max==None or max>current_interval[1]:
+                if max==None or max<current_interval[1]:
                     max=current_interval[1]
-                if min==None or min<current_interval[0]:
+                if min==None or min>current_interval[0]:
                     min=current_interval[0]
             #end for j in self._entries
             if min==max :
-                tI.append((-2*min,max*2))
+                tI.append((min-self._mval,max+self._mval))
             else:
                 tI.append((min,max))
         return tI
@@ -252,7 +241,7 @@ class Rtree:
         self._dim = dim
         self._min = min
         self._max = max
-        self._mval = mval
+        self._mval = mval*max/min
 
         #if info not None , then insert
         if info!=None:
@@ -272,7 +261,7 @@ class Rtree:
         #self._nodes[i].printNode()
         for j in self._nodes[i].getChildren():
             if self._nodes[i].isLeaf():
-                print(str(j[:]))
+                print(str(j[len(j)-1]))
                 self.infolen+=1
             else:
                 print("kid : "+str(j))
@@ -360,7 +349,6 @@ class Rtree:
         for entry in self._nodes[indx].getEntries():
             #apo to entry 8elw mono to interval
             intervals = entry[0]
-            print(str(intervals))
             d=0
             while d < self._dim:
                 interval = intervals[d]
@@ -372,14 +360,10 @@ class Rtree:
                     if not self._nodes[indx].isLeaf():
                         self._sresult+=self.rTreeSearch(vector,entry[1])
                     else:
-                        print(str(entry[0]))
-                        print(str(vector))
-                        input('a')
                         res.append(entry[1])
             #endwhile
         #endfor
         if indx==0:
-            input('a')
             t = self._sresult
             self._sresult=None#reset to none
             return t
