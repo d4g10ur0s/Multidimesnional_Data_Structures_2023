@@ -1,6 +1,15 @@
 # Multidimesnional Data Structures
 
 # Table of Contents
+- [Multidimesnional Data Structures](#multidimesnional-data-structures)
+- [Table of Contents](#table-of-contents)
+- [General Info](#general-info)
+- [Summary](#summary)
+- [Technologies](#technologies)
+- [Installation](#installation)
+- [Contact](#contact)
+- [Contributing](#contributing)
+- [License](#license)
 
 # General Info
 The aim of the project is the implementation of multidimensional data structures in a Programming Environment and their experimental evaluation with real data sets in basic operations: Build, Insert, Delete, Update, Searching (Similarity, kNN, Interval, Stabbing, 3-sided..etc) Queries.
@@ -30,7 +39,6 @@ git clone https://github.com/d4g10ur0s/Multidimesnional_Data_Structures_2023.git
 
 # Contact
 You can always contact us through email : 
-- 
 - [rnicolaouceng@gmail]()
 
 # Contributing
