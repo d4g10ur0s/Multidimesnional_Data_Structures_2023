@@ -5,6 +5,9 @@ import re
 import time
 import pandas as pd
 
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
+
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
@@ -17,8 +20,9 @@ class QuotesSpider(scrapy.Spider):
         wurls = [
             'https://thesaurus.yourdictionary.com/education',
         ]
-        # for url in wurls:
-        #     yield scrapy.Request(url=url, callback=self.parse_words)
+
+        '''for url in wurls:
+            yield scrapy.Request(url=url, callback=self.parse_words)'''
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
@@ -59,12 +63,38 @@ class QuotesSpider(scrapy.Spider):
         except ValueError:
             pass
 
+    '''def write_file(self,scientist):
+        scientist = pd.DataFrame(data=[scientist])
+        path = os.getcwd()
+        try :
+            if os.path.exists(path + "\\scientists"):
+                pass
+            else:
+                os.mkdir(path + "\\scientists")
+
+            f = open(path + "\\scientists\\"+scientist.loc[0]["name"]+".json","w+")
+            scientist.to_json(f)
+            #input('meta')
+            f.close()
+        except ValueError:
+            pass'''
+
     async def parse_2(self,response):
+        f= open("D:\\Sxolh\\5o_Etos\\Xeimerino\\PolydiastatesDD\\tutorial\\words\\words.txt","r")
+        words = f.readlines()
+        f.close()
+        t = []
+        ps = PorterStemmer()
+
+        for i in words :
+            t.append(ps.stem(i[:len(i)-1]))
+        words = t
+
         #metavlhth scientist
         scientist = {
             'name' : '',
+            'education_text' : "",
             'awards' : 0,
-            'education_text' : None,
         }
         #pairnw to viografiko ka8e scientist
         xp = '//*[@class=\"infobox biography vcard\"]'
@@ -119,13 +149,27 @@ class QuotesSpider(scrapy.Spider):
             for i in range(0,50):
                 p=p.replace("["+str(i)+"]" , '')
 
-            print(str(p.strip()))
-            #p = re.sub('\"*[a-z,A-Z,/,\,_,-,=,:]*\"','',p)
-            p = re.sub('\"*[a-z,A-Z,/,\,_,-,=,:]*\"','',p)
+            p = re.sub('\"[a-z,A-Z,/,\\,_,-,=,:]*\"',' ',p)
             p = re.sub('#*[a-z,A-Z,_,:,0-9]+\-[0-9]*','',p)
-            #p = re.sub('[a-z,A-Z,_,]+\-[0-9]+','',p)
-            print("*"*25)
-            print(str(p.strip()))
+            p=p.strip()
+            p=re.sub('(\")',' ',p)
+            edu_text = []
+            for w in words :
+                mregex = "[ä,a-z,A-Z,0-9, ,(,),\']+("+w+")[A-Z,a-z,0-9,(,), ,\']+"
+                b = re.match(mregex, p)
+                if b==None :
+                    mregex = "[ä,a-z,A-Z,0-9, ,(,),\']+("+w.capitalize()+")[A-Z,a-z,0-9,(,), ,\']+"
+                    b = re.match(mregex, p)
+                    if b==None:
+                        pass
+                    else:
+                        edu_text.append(b.group())
+                else:
+                    edu_text.append(b.group())
+
+            for sentence in edu_text :
+                scientist["education_text"]+=sentence
+
         #prepei na apo8hkeusw plhroforia
         if scientist['awards']==None:
             scientist['awards']=0
