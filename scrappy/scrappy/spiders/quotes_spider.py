@@ -71,7 +71,6 @@ class QuotesSpider(scrapy.Spider):
                 pass
             else:
                 os.mkdir(path + "\\scientists")
-
             f = open(path + "\\scientists\\"+scientist.loc[0]["name"]+".json","w+")
             scientist.to_json(f)
             #input('meta')
@@ -80,7 +79,8 @@ class QuotesSpider(scrapy.Spider):
             pass'''
 
     async def parse_2(self,response):
-        f= open("D:\\Sxolh\\5o_Etos\\Xeimerino\\PolydiastatesDD\\tutorial\\words\\words.txt","r")
+        path = os.getcwd()
+        f= open(path + "\\scrappy\\spiders\\words\\words.txt","r")
         words = f.readlines()
         f.close()
         t = []
