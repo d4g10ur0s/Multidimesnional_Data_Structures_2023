@@ -3,7 +3,10 @@
 # Table of Contents
 
 # General Info
-The purpose of this computer science project is to present the focuses on optimizing range and similarity queries on text datasets using quadratic trees, range trees, and R-trees. The project aims to compare the performance of these tree-based data structures in terms of query processing time, space complexity, and accuracy.
+The aim of the project is the implementation of multidimensional data structures in a Programming Environment and their experimental evaluation with real data sets in basic operations: Build, Insert, Delete, Update, Searching (Similarity, kNN, Interval, Stabbing, 3-sided..etc) Queries.
+
+# Summary
+Our task is to implement a multi-dimensional index structure (k-d trees, quad trees, Range Trees and R-trees) to index a set of texts from computer scientists from Wikipedia with the format (Surname: String, #Awards: Integer, Education: text-vector). The index will be created based on the first two fields (surname, #awards) to find the scientists whose names belong to an alphabetical range and have received more awards than a user-defined threshold. Then, similarity queries will be performed on the third field (education) using the LSH method. The task also involves comparing the four methods: k-d + LSH, Quad+LSH, Range+LSH, R-trees + LSH.
 
 
 # Technologies
