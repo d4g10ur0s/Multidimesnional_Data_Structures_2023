@@ -20,6 +20,7 @@ Our task is to implement a multi-dimensional index structure (k-d trees, quad tr
 
 # Technologies
 - Python
+- Pandas Library Version 1.3.5
 
 # Installation
 
@@ -39,6 +40,9 @@ git clone https://github.com/d4g10ur0s/Multidimesnional_Data_Structures_2023.git
 
 # Contact
 You can always contact us through email : 
+
+- [aledadu@hotmail.com]()
+
 - [rnicolaouceng@gmail]()
 
 # Contributing
