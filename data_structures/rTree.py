@@ -29,10 +29,11 @@ def area(interval):
 
 class Rnode :
     _entries = []# entries are type of ( [set of intervals] , cp || information )
-    def __init__(self,dim,min,max,parent=None,leaf=True):
+    def __init__(self,dim,min,max,mval,parent=None,leaf=True):
         self._dim = dim
         self._min = min
         self._max = max
+        self._mval = mval
         self._parent = parent
         self._leaf = leaf
     def setEntries(self,entries):
@@ -56,7 +57,10 @@ class Rnode :
     def installEntry(self,info):
         I = []
         for d in range(self._dim):
-            I.append( (info[d]-(self._min*(10**(-1))),info[d]+(self._min*(10**(-1)))) )
+            if info[d] >= 0:
+                I.append( (info[d]*(-2), info[d]*2) )
+            else:
+                I.append( (info[d]*2, info[d]*(-2)) )
         self._entries.append( (I,info) )
     ''' Gia Choose Leaf '''
     def isLeaf(self):
@@ -70,14 +74,23 @@ class Rnode :
             for d in range(self._dim):
                 dinterval = interval[d]#3. interval at dimension d
                 if info[d] < 0:#4. make the enlargement
-                    tI.append( (dinterval[0]+info[d], dinterval[1]-info[d] ) )
+                    if (dinterval[0]>info[d]):
+                        if min==None or (dinterval[0]+info[d])**2<min:
+                            min = (dinterval[0]+info[d])**2
+                            child = i[1]
+                    elif (dinterval[1]<info[d]):
+                        if min==None or (dinterval[1]-info[d])**2<min:
+                            min = (dinterval[1]-info[d])**2
+                            child = i[1]
                 else:
-                    tI.append( (dinterval[0]-info[d], dinterval[1]+info[d] ) )
-                #compute area
-                a = area(tI)
-                if min == None or min < a:
-                    min = a
-                    child = i[1]
+                    if (dinterval[0]>info[d]):
+                        if min==None or (dinterval[0]-info[d])**2<min:
+                            min = (dinterval[0]-info[d])**2
+                            child = i[1]
+                    elif (dinterval[1]<info[d]):
+                        if min==None or (dinterval[1]+info[d])**2<min:
+                            min = (dinterval[1]+info[d])**2
+                            child = i[1]
             #end for d in dimension range
         #end for i in self._entries
         return child
@@ -96,7 +109,7 @@ class Rnode :
                     min=current_interval[0]
             #end for j in self._entries
             if min==max :
-                tI.append((min-self._min,max+self._min))
+                tI.append((-2*min,max*2))
             else:
                 tI.append((min,max))
         return tI
@@ -118,11 +131,11 @@ class Rnode :
         n2=None
         indx1,indx2 = self.pickSeeds()
         if self._parent==None:
-            n1 = Rnode(self._dim,self._min,self._max,0,self._leaf)
-            n2 = Rnode(self._dim,self._min,self._max,0,self._leaf)
+            n1 = Rnode(self._dim,self._min,self._max,self._mval,0,self._leaf)
+            n2 = Rnode(self._dim,self._min,self._max,self._mval,0,self._leaf)
         else:
-            n1 = Rnode(self._dim,self._min,self._max,self._parent,self._leaf)
-            n2 = Rnode(self._dim,self._min,self._max,self._parent,self._leaf)
+            n1 = Rnode(self._dim,self._min,self._max,self._mval,self._parent,self._leaf)
+            n2 = Rnode(self._dim,self._min,self._max,self._mval,self._parent,self._leaf)
         n1.clearEntries()
         n2.clearEntries()
         n1.insertEntry(self._entries[indx1])
@@ -133,7 +146,7 @@ class Rnode :
             self._entries.pop(indx2-1)
         else:
             n2.insertEntry(self._entries[indx2])
-            self._entries.pop(indx2)
+            self._entries.pop(index2)
         #3. invoke pick next as long as self._entries has entries
         l = len(self._entries)
         while l>0:
@@ -175,9 +188,9 @@ class Rnode :
         tindx=0
         for i in self._entries:
             ''' edw ginetai h malakeia '''
-            t1=Rnode(self._dim,self._min,self._max)
+            t1=Rnode(self._dim,self._min,self._max,self._mval)
             t1.setEntries(node1.getEntries())
-            t2=Rnode(self._dim,self._min,self._max)
+            t2=Rnode(self._dim,self._min,self._max,self._mval)
             t2.setEntries(node2.getEntries())
 
             t1.insertEntry(i)
@@ -191,9 +204,9 @@ class Rnode :
         return indx
     ''' pick node '''
     def pickNode(self,n1,n2,indx):
-        tn1=Rnode(self._dim,self._min,self._max)
+        tn1=Rnode(self._dim,self._min,self._max,self._mval)
         tn1.setEntries(n1.getEntries())
-        tn2=Rnode(self._dim,self._min,self._max)
+        tn2=Rnode(self._dim,self._min,self._max,self._mval)
         tn2.setEntries(n2.getEntries())
 
         tn1.insertEntry(self._entries[indx])
@@ -232,12 +245,14 @@ class Rnode :
         return ch
 
 class Rtree:
+    _sresult=None
     _nodes = None
     infolen = 0
-    def __init__(self,dim,min,max,info=None):
+    def __init__(self,dim,min,max,mval,info=None):
         self._dim = dim
         self._min = min
         self._max = max
+        self._mval = mval
 
         #if info not None , then insert
         if info!=None:
@@ -257,7 +272,7 @@ class Rtree:
         #self._nodes[i].printNode()
         for j in self._nodes[i].getChildren():
             if self._nodes[i].isLeaf():
-                print(str(j[len(j)-1]))
+                print(str(j[:]))
                 self.infolen+=1
             else:
                 print("kid : "+str(j))
@@ -269,7 +284,7 @@ class Rtree:
     def insert(self,info):
         if self._nodes==None:#0. tree has not been formed
             self._nodes=[]#1. create nodes
-            n = Rnode(self._dim,self._min,self._max)#2. create node
+            n = Rnode(self._dim,self._min,self._max,self._mval)#2. create node
             n.installEntry(info)#3. insert info
             self._nodes.append(n)#4. append nodes
         else:#0. tree has been formed
@@ -335,3 +350,38 @@ class Rtree:
     def adjustPointers(self,indx):
         for i in self._nodes:
             i.adjustPointer(indx)
+
+    def rTreeSearch(self,vector,indx=0):
+        print(str(vector))
+        if indx==0:
+            self._sresult=[]
+
+        res = []#temp storage
+        for entry in self._nodes[indx].getEntries():
+            #apo to entry 8elw mono to interval
+            intervals = entry[0]
+            print(str(intervals))
+            d=0
+            while d < self._dim:
+                interval = intervals[d]
+                if vector[d] <= interval[1] and vector[d]>=interval[0]:
+                    d+=1
+                else:
+                    break#if it doesn't overlap , then continue with next entry
+                if d==self._dim:
+                    if not self._nodes[indx].isLeaf():
+                        self._sresult+=self.rTreeSearch(vector,entry[1])
+                    else:
+                        print(str(entry[0]))
+                        print(str(vector))
+                        input('a')
+                        res.append(entry[1])
+            #endwhile
+        #endfor
+        if indx==0:
+            input('a')
+            t = self._sresult
+            self._sresult=None#reset to none
+            return t
+        else:
+            return res
