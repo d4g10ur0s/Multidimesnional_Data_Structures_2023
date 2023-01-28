@@ -1,5 +1,6 @@
 import time
 import math
+import pandas as pd
 
 def getJ(e1, e2,l):
     tI = []
@@ -58,7 +59,6 @@ class Rnode :
         I = []
         for d in range(self._dim):
             I.append( (info[d]-self._mval,info[d]+self._mval) )
-
         self._entries.append( (I,info) )
     ''' Gia Choose Leaf '''
     def isLeaf(self):
@@ -232,7 +232,17 @@ class Rnode :
         for i in self._entries:
             ch.append(i[1])
         return ch
-
+    def delEntry(self,indx):
+        self._entries.pop(indx)
+    def toDelete(self):
+        return (len(self._entries)<self._min)
+    def delKid(self,kid):
+        i=0
+        while i <len(self._entries):
+            if kid==self._entries[i][1]:
+                self._entries.pop(i)
+                break
+            i+=1
 class Rtree:
     _sresult=None
     _nodes = None
@@ -241,7 +251,7 @@ class Rtree:
         self._dim = dim
         self._min = min
         self._max = max
-        self._mval = mval*max/min
+        self._mval = mval*1.5#+mval*max/min
 
         #if info not None , then insert
         if info!=None:
@@ -251,6 +261,7 @@ class Rtree:
                 print(str(j))
                 j+=1
                 self.insert(i)
+            print("*"*10)
     '''Print Tree'''
     def printRTree(self,i=0):
         print("* "*10 + " Node : " + str(i) + " " + " *"*10)
@@ -341,7 +352,6 @@ class Rtree:
             i.adjustPointer(indx)
 
     def rTreeSearch(self,vector,indx=0):
-        print(str(vector))
         if indx==0:
             self._sresult=[]
 
@@ -360,7 +370,7 @@ class Rtree:
                     if not self._nodes[indx].isLeaf():
                         self._sresult+=self.rTreeSearch(vector,entry[1])
                     else:
-                        res.append(entry[1])
+                        res.append((entry[1],indx))
             #endwhile
         #endfor
         if indx==0:
@@ -369,3 +379,31 @@ class Rtree:
             return t
         else:
             return res
+
+    def denseTree(self,lindx,eindx):
+        Q=[]#set of eliminated nodes
+        while 1:
+            lnode = self._nodes[lindx]
+            lnode.delEntry(eindx)#1. delete entry from node
+            p=lnode.getParent()#2. get parent node
+            if lnode.toDelete():#3. node has fewer than self._min
+                Q=Q+lnode.getEntries()#4. append lnode's entries to Q
+                self._nodes[p].delKid(lindx)#5. delete entry from parent
+            else:
+                self._nodes[p].setTightRectangle(self._nodes[lindx].getTightRectangle(),lindx)#4. no elimination, then just set set Tight Rectangle
+                return Q
+
+    ''' delete a node '''
+    def deleteNode(self,indx,vname):
+        #1. find lnode
+        lnode = self._nodes[indx]
+        #2. find entry
+        v1 = pd.DataFrame(data=vname[:self._dim])
+        eindx = 0
+        for i in self._nodes[indx].getEntries():
+            v2 = pd.DataFrame(data=i[1][:self._dim])
+            tm=(v1-v2)
+            if tm.mean().iloc[0]==0:
+                for i in self.denseTree(indx,eindx):
+                    self.insert(i)
+            eindx+=1
