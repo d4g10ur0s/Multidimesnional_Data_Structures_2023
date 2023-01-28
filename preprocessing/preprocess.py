@@ -72,6 +72,21 @@ def Menu():
     print("5 - kNN")
     print("-1 - Exit Program\n")
 
+def vectorize_input(input_text, model,max):
+    processed_sentences = gensim.utils.simple_preprocess(input_text)
+    vector = []
+    for k in processed_sentences:
+        try:
+            vector.append(model.wv[k].mean())
+        except:
+            vector.append(np.nan)
+    print(max - len(vector))
+    for i in range(max - len(vector)):
+
+        vector.append(0)
+    return vector
+
+
 def main():
 
     global gmax
@@ -139,6 +154,8 @@ def main():
     for i in range(0,len(vectors)):
         df_input.fillna(value=0.0,inplace=True)
         df_input[str(i)].replace(to_replace=0,value=df_input[str(i)].mean(),inplace=True )
+
+
 
     ''' Allagh apo indx se onomata '''
     i=0
@@ -265,6 +282,10 @@ def main():
                     gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
                     a = rt(dim = gdim, info = temp[:],min=2 , max=4,mval=gmean/gmax)
                     a.printRTree()#1.1
+
+                elif choice2 == 1:
+                    gdim = 44
+                    a = rt(dim = gdim, info = temp[:],min=2 , max=4,mval=gmean/gmax)
                     search_result = a.rTreeSearch(rTreeSearchInput())
                     names = []
                     i = 0;
@@ -280,32 +301,72 @@ def main():
                     input('')
 
                     # Load your dataframe
-                    df = pd.read_csv('word2vecTransponse.csv',header=1, index_col=False)
+                    df = pd.read_csv('word2vecTransponse.csv',header=0, index_col=False)
                     print(df)
                     input('')
                     # Create an LSH index
-                    lsh = MinHashLSH(threshold=0.5, num_perm=1330)
+                    lsh = MinHashLSH(threshold=0.5, num_perm=571)
 
                     # Insert the vectors into the LSH index, using the name as the key
-                    for i in range(df.shape[0]):
-                        name = df.iloc[i,0]
-                        vector = df.iloc[i,1:].values
-                        m = MinHash(num_perm=1330)
+                    df = df.transpose()
+                    print(df)
+                    for i in range(df.shape[1]):
+                        name = df.iloc[0,i]
+                        vector = df.iloc[1:,i].values
+                        m = MinHash(num_perm=571)
                         for v in vector:
                             m.update(str(v).encode('utf8'))
                         lsh.insert(name, m)
+                    print("Check0",lsh)
+                    testText = '"Aaron Sloman is a philosopher and researcher on      Artificial intelligence artificial intelligence and      Cognitive science cognitive scienceHis first job was teaching philosophy at the      University of Hull University of Hull (1962His first job was teaching philosophy at the      University of Hull University of Hull (1962In 1991, after 27 years at Sussex, he was offered a research chair in the School of Computer Science at the      University of Birmingham University of Birmingham, where he started a cognition and affect project (later on the Free Open Source Poplog Portal) and is still on itIn 1991, after 27 years at Sussex, he was offered a research chair in the School of Computer Science at the      University of Birmingham University of Birmingham, where he started a cognition and affect project (later on the Free Open Source Poplog Portal) and is still on itIn 1991, after 27 years at Sussex, he was offered a research chair in the School of Computer Science at the      University of Birmingham University of Birmingham, where he started a cognition and affect project (later on the Free Open Source Poplog Portal) and is still on itMuch of his thinking about AI was influenced by      Marvin Minsky Marvin Minsky and despite his critique of logicism he also learnt much from   Much of his thinking about AI was influenced by      Marvin Minsky Marvin Minsky and despite his critique of logicism he also learnt much from   He is a Fellow of      Association for the Advancement of Artificial Intelligence Association for the Advancement of Artificial Intelligence,               Society for the Study of Artificial Intelligence and the Simulation of Behaviour Society for the Study of Artificial Intelligence and the Simulation of Behaviour and      redirect    European Coordinating Committee for Artificial Intelligence European Coordinating Committee for Artificial Intelligence'
+                    vectorized_input = vectorize_input(testText, model,len(df_input.axes[1]))
 
-                    df = pd.read_csv('word2vecTransponse.csv',header=1, index_col=False)
-                    testName = 'Mark Weiser'
+                    # vectorized_input = np.append(vectorized_input, np.zeros(1330-len(vectorized_input)))
+                    # vectorized_input = np.pad(vectorized_input, (0, number - len(vectorized_input)), 'constant')
+                    print("Check1",vectorized_input)
+                    a = pd.DataFrame(data = vectorized_input)
+                    a.replace(to_replace=0,value=a.mean(),inplace=True )
+                    m1 = MinHash(num_perm=571)
+                    for v in a:
+                            m1.update(str(v).encode('utf8'))
+                    print("Check3",a)
+                    print("Check4",m1)
+                    result = lsh.query(m1)
+                    print("Check5",result)
+                    # scientists['education_vector'] = np.nan
+                    # processed_sentences = []
+                    # for i in range(0,indx):
+                    #     if pd.isnull(scientists.iloc[i]["education_text"]):
+                    #         processed_sentences.append(gensim.utils.simple_preprocess("No Information"))
+                    #     else:
+                    #         processed_sentences.append(gensim.utils.simple_preprocess(scientists.iloc[i]["education_text"]))
+
+                    # vectors = {}
+                    # i = 0
+                    # for v in processed_sentences:
+                    #     vectors[str(i)] = []
+                    #     for k in v:
+                    #         try:
+                    #             vectors[str(i)].append(model.wv[k].mean())
+                    #         except:
+                    #             vectors[str(i)].append(np.nan)
+                    #     i+=1
+
+                    # df_input = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in vectors.items() ]))
+                    # for i in range(0,len(vectors)):
+                    #     df_input.fillna(value=0.0,inplace=True)
+                    #     df_input[str(i)].replace(to_replace=0,value=df_input[str(i)].mean(),inplace=True
+                    # df = pd.read_csv('word2vecTransponse.csv',header=1, index_col=False)
+                   
                     # Query the LSH index with a name
-                    print('LSH',lsh)
                     
-                    m= MinHash(num_perm=1330)
-                    m.update(str(v).encode('utf8'))
-                    for key in lsh.keys:
-                        if str(key) == testName:
-                            print(lsh.storage.get(key))
-                            print(key)
+                    
+                    # m= MinHash(num_perm=1330)
+                    # m.update(str(v).encode('utf8'))
+                    # for key in lsh.keys:
+                    #     if str(key) == testName:
+                    #         print(lsh.storage.get(key))
+                    #         print(key)
                             # result = lsh.query(obj)
                             # print(result)   
                     # keys = list(lsh.keys())
