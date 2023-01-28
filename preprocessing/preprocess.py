@@ -7,6 +7,7 @@ import gensim
 import time
 import os
 import csv
+from datasketch import MinHashLSH,MinHash
 
 path = os.getcwd()
 sys.path.append(path)
@@ -143,9 +144,17 @@ def main():
     i=0
     for i in range(0,len(df_input.axes[1])):
         df_input.rename(columns = {str(i):scientists.iloc[i]["name"]}, inplace = True)
-
-    print(df_input)
     
+
+    # print(df_input)
+    word2vecNames = df_input
+    # Write the dataframe to a CSV file
+    # word2vecNames.to_csv('data/word2vec.csv', index=False)
+    # word2vecNames.to_csv('word2vec.csv', index=False)
+    # df = pd.read_csv('word2vec.csv')
+    # df.transpose()
+    # df = df.T
+    # df.to_csv('word2vecTransponse.csv',header=False)
     
     '''to model.wv exei to vector'''
 
@@ -257,9 +266,59 @@ def main():
                     a = rt(dim = gdim, info = temp[:],min=2 , max=4,mval=gmean/gmax)
                     a.printRTree()#1.1
                     search_result = a.rTreeSearch(rTreeSearchInput())
+                    names = []
+                    i = 0;
                     for s in search_result:
                         if len(s)>0:
                             print(str(s[len(s)-1]))
+                            names.append(str(s[len(s)-1]))
+                            i=+1
+                    # Names array with string names
+                    # word2vecNames word2vec
+                    print('Names',names)
+                    print('Press a button to continue for LSH')
+                    input('')
+
+                    # Load your dataframe
+                    df = pd.read_csv('word2vecTransponse.csv',header=1, index_col=False)
+                    print(df)
+                    input('')
+                    # Create an LSH index
+                    lsh = MinHashLSH(threshold=0.5, num_perm=1330)
+
+                    # Insert the vectors into the LSH index, using the name as the key
+                    for i in range(df.shape[0]):
+                        name = df.iloc[i,0]
+                        vector = df.iloc[i,1:].values
+                        m = MinHash(num_perm=1330)
+                        for v in vector:
+                            m.update(str(v).encode('utf8'))
+                        lsh.insert(name, m)
+
+                    df = pd.read_csv('word2vecTransponse.csv',header=1, index_col=False)
+                    testName = 'Mark Weiser'
+                    # Query the LSH index with a name
+                    print('LSH',lsh)
+                    
+                    m= MinHash(num_perm=1330)
+                    m.update(str(v).encode('utf8'))
+                    for key in lsh.keys:
+                        if str(key) == testName:
+                            print(lsh.storage.get(key))
+                            print(key)
+                            # result = lsh.query(obj)
+                            # print(result)   
+                    # keys = list(lsh.keys())
+                    # for name in keys:
+                    #     print(name)
+                    #     m = lsh.get_minhash(name)
+                    #     # Do something with the minhash object, such as printing its values
+                    #     for i, v in enumerate(m.hashvalues):
+                    #         print(f"Permutation {i} value: {v}")
+
+                    
+                   
+                    
                 Menu()
                 choice2 = int(input())
 
@@ -269,6 +328,8 @@ def main():
     ''' QuadTree '''
     #a = qt(dim = len(temp[0])-1, info = temp[:24])#2.0
     #a.printQTree()#2.1
+
+    
 
 if __name__ == "__main__" :
     main()
