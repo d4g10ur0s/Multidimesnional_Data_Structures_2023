@@ -244,6 +244,7 @@ class Rnode :
                 break
             i+=1
 class Rtree:
+    _starting_node = True
     _sresult=None
     _nodes = None
     infolen = 0
@@ -288,6 +289,7 @@ class Rtree:
             n.installEntry(info)#3. insert info
             self._nodes.append(n)#4. append nodes
         else:#0. tree has been formed
+            self.printRTree()
             lindx = self.chooseLeaf(info)#1.invoke choose leaf
             self._nodes[lindx].installEntry(info)#2. install new entry
             if self._nodes[lindx].hasRoom():#3. if has room
@@ -379,16 +381,43 @@ class Rtree:
             return t
         else:
             return res
+    def getLPath(self,indx,Q):
+        starting_node=self._starting_node
+        self._starting_node=False
+        arr = [indx,]
+        if self._nodes[indx].isLeaf():
+            Q+=self._nodes[indx].getEntries()
+        else:
+            arr+=self._nodes[indx].getChildren()
+            for i in self._nodes[indx].getEntries():
+                arr1,Q1=getLPath(i[1],Q)
+                arr+=arr1
+                Q+=Q1
+        return arr,Q
 
+    ''' adjust tree for delete '''
     def denseTree(self,lindx,eindx):
         Q=[]#set of eliminated nodes
-        while 1:
+        j=1
+        while j>0:
             lnode = self._nodes[lindx]
-            lnode.delEntry(eindx)#1. delete entry from node
+            if j==1:
+                j+=1
+                lnode.delEntry(eindx)#1. delete entry from node
             p=lnode.getParent()#2. get parent node
-            if lnode.toDelete():#3. node has fewer than self._min
-                Q=Q+lnode.getEntries()#4. append lnode's entries to Q
-                self._nodes[p].delKid(lindx)#5. delete entry from parent
+            if lnode.toDelete() and not(p==None):#3. node has fewer than self._min
+                if lnode.isLeaf():
+                    Q=Q+lnode.getEntries()#4. append lnode's entries to Q
+                    self._nodes[p].delKid(lindx)#5. delete entry from parent
+                    self.adjustPointers(lindx)#5.5 adjust before pop and get parent
+                    lindx=lnode.getParent()#6 continue with parent
+                    self._nodes.pop(lindx)
+                else:
+                    arr,Q1=self.getLPath(lnode.getEntries(),Q)#4. append lnode's entries to Q
+                    Q+=Q1
+                    for k in arr:#5. delete every kid
+                        self.adjustPointers(k)
+                        self._nodes.pop(k)
             else:
                 self._nodes[p].setTightRectangle(self._nodes[lindx].getTightRectangle(),lindx)#4. no elimination, then just set set Tight Rectangle
                 return Q
@@ -404,6 +433,7 @@ class Rtree:
             v2 = pd.DataFrame(data=i[1][:self._dim])
             tm=(v1-v2)
             if tm.mean().iloc[0]==0:
-                for i in self.denseTree(indx,eindx):
-                    self.insert(i)
+                Q = self.denseTree(indx,eindx)
+                for inf in Q :
+                    self.insert(inf[1])
             eindx+=1
