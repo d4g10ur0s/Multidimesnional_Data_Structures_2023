@@ -137,6 +137,13 @@ class QuadNode :
                 self._info.pop(i)
             i+=1
         return nw,ne,se,sw
+    def rmEntry(self,entry):
+        i=0
+        while i < len(self._info):
+            if self._info[i]==entry:
+                self._info.pop(i)
+                break
+            i+=1
     def nodeSplitted(self,kids):
         self._leaf=False
         temp = self._info
@@ -148,6 +155,8 @@ class QuadNode :
         return temp
     def clearNode(self):
         self._info = []
+    def isEmpty(self):
+        return (self._info==None or len(self._info) == 0)
     def getCoordinates(self):
         return [self.nw,self.ne,self.se,self.sw]
     def printNode(self):
@@ -271,10 +280,7 @@ class QuadTree :
         indx = self.findLeaves(info)
         arr = []
         for i in indx:
-            arr+=self._nodes[i].getInfo()
-        for i in range(len(arr)) :
-            print("*"*10+" " + str(i)+ " " + "*"*10)
-            print(str(arr[i]))
+            arr.append(self._nodes[i].getInfo())
         return arr
 
     def qDelete(self,indx,entry):
