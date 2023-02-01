@@ -22,6 +22,26 @@ global gmax
 global gdim
 global gmean
 
+def preprocessQuery(dim,qv,model):
+    qvectors = {}
+    i = 0
+    qvectors[str(i)] = []
+    for k in qv:
+        try:
+            qvectors[str(i)].append(model.wv[k].mean())
+        except:
+            qvectors[str(i)].append(np.nan)
+
+    df_query = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in qvectors.items() ]))
+    df_query.fillna(value=0.0,inplace=True)
+
+    if dim-len(df_query) > 0:
+        d = pd.DataFrame(data=np.zeros((dim, 1)))
+        df_query = pd.concat([d,df_query], axis=1, join='outer', ignore_index=False)
+        df_query.fillna(value=0.0,inplace=True)
+
+    return df_query[str(0)]
+
 def rTreeSearchInput():
     global gmax
     global gdim
