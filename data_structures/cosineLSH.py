@@ -17,7 +17,38 @@ class CosineLSH:
     def __init__(self,vdoc,doc,dim):
         self.LSH(vdoc,doc,dim)
 
-    def lshQuery(self,query,search_result,df_input,window=None):
+    def lshQuery2(self,query,search_result,df_input,window=None):
+        #1. get index for each search_result
+        cvec = []
+        distance = []
+        names = []
+        for sc in search_result :
+            cvec.append(df_input.loc[:,sc])
+
+        for cv in cvec:
+            #1. make index for sresult
+            qbin = cv.to_numpy(dtype='float32').dot(self.model["random_vectors"])>=0
+            powers_of_two = 1 << np.arange(self.model["bnum"] - 1, -1, step=-1)
+            bin_indx = qbin.dot(powers_of_two)
+            #get the names
+            tnames = self.model["table"][bin_indx]
+            #get the vectors
+            dvec = []
+            for i in tnames :
+                dvec.append(df_input.loc[:,i])
+                distance.append(pairwise_distances(df_input.loc[:,i].to_numpy(dtype='float32').reshape(1,-1), query.to_numpy(dtype='float32').reshape(1,-1), metric='cosine').flatten())
+            names += tnames
+        #print(str(dvec))
+        #calc cosine similarity
+
+        distance_col = 'distance'
+        nearest_neighbors = pd.DataFrame({
+            'id': df_input.loc[:,names].columns, distance_col: distance
+        }).sort_values(distance_col).reset_index(drop=True)
+        print(str(nearest_neighbors))
+
+
+    def lshQuery1(self,query,search_result,df_input,window=None):
         #1. make index for query
         qbin = query.to_numpy(dtype='float32').dot(self.model["random_vectors"])>=0
         powers_of_two = 1 << np.arange(self.model["bnum"] - 1, -1, step=-1)
@@ -30,6 +61,29 @@ class CosineLSH:
         for i in names :
             dvec.append(df_input.loc[:,i])
             distance.append(pairwise_distances(df_input.loc[:,i].to_numpy(dtype='float32').reshape(1,-1), query.to_numpy(dtype='float32').reshape(1,-1), metric='cosine').flatten())
+        print(str(dvec))
+        #calc cosine similarity
+
+        distance_col = 'distance'
+        nearest_neighbors = pd.DataFrame({
+            'id': df_input.loc[:,names].columns, distance_col: distance
+        }).sort_values(distance_col).reset_index(drop=True)
+        print(str(nearest_neighbors))
+
+    def lshQuery(self,query,search_result,df_input,window=None):
+        #1. make index for query
+        qbin = query.to_numpy(dtype='float32').dot(self.model["random_vectors"])>=0
+        powers_of_two = 1 << np.arange(self.model["bnum"] - 1, -1, step=-1)
+        bin_indx = qbin.dot(powers_of_two)
+        #get the names
+        names = self.model["table"][bin_indx]
+        #get the vectors
+        dvec = []
+        distance = []
+        for i in names :
+            if i in search_result :
+                dvec.append(df_input.loc[:,i])
+                distance.append(pairwise_distances(df_input.loc[:,i].to_numpy(dtype='float32').reshape(1,-1), query.to_numpy(dtype='float32').reshape(1,-1), metric='cosine').flatten())
         print(str(dvec))
         #calc cosine similarity
 
