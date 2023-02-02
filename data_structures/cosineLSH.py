@@ -1,3 +1,5 @@
+from sklearn.metrics.pairwise import pairwise_distances
+
 import pandas as pd
 import numpy as np
 
@@ -23,11 +25,19 @@ class CosineLSH:
         #get the names
         names = self.model["table"][bin_indx]
         #get the vectors
-        dvec = pd.DataFrame()
+        dvec = []
+        distance = []
         for i in names :
             dvec.append(df_input.loc[:,i])
+            distance.append(pairwise_distances(df_input.loc[:,i].to_numpy(dtype='float32').reshape(1,-1), query.to_numpy(dtype='float32').reshape(1,-1), metric='cosine').flatten())
         print(str(dvec))
         #calc cosine similarity
+
+        distance_col = 'distance'
+        nearest_neighbors = pd.DataFrame({
+            'id': df_input.loc[:,names].columns, distance_col: distance
+        }).sort_values(distance_col).reset_index(drop=True)
+        print(str(nearest_neighbors))
 
     def LSH(self,vdoc,doc,dim):
         np.random.seed(0)
