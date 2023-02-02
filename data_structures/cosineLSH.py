@@ -15,10 +15,19 @@ class CosineLSH:
     def __init__(self,vdoc,doc,dim):
         self.LSH(vdoc,doc,dim)
 
-    def lshQuery(self,search_result,query,window=None,alt=0):
+    def lshQuery(self,query,search_result,df_input,window=None):
         #1. make index for query
-        qbin = query.transpose().to_numpy(dtype='float32').dot(to_numpyself.model["random_vectors"])>=0
-        print(str(qbin))
+        qbin = query.to_numpy(dtype='float32').dot(self.model["random_vectors"])>=0
+        powers_of_two = 1 << np.arange(self.model["bnum"] - 1, -1, step=-1)
+        bin_indx = qbin.dot(powers_of_two)
+        #get the names
+        names = self.model["table"][bin_indx]
+        #get the vectors
+        dvec = pd.DataFrame()
+        for i in names :
+            dvec.append(df_input.loc[:,i])
+        print(str(dvec))
+        #calc cosine similarity
 
     def LSH(self,vdoc,doc,dim):
         np.random.seed(0)
@@ -41,7 +50,10 @@ class CosineLSH:
         for idx, bin_index in zip(list(bin_vectors.columns.values),bin_indices):
             table[bin_index].append(idx)
 
-        self.model = {'table': table,
+        self.model = {
+             'bnum' : bnum,
+             'table': table,
              'random_vectors': rvec,
              'bin_indices': bin_indices,
-             'bin_indices_bits': bin_vectors}
+             'bin_indices_bits': bin_vectors,
+             }
