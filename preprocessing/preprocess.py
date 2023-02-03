@@ -11,16 +11,11 @@ import csv
 path = os.getcwd()
 sys.path.append(path)
 
-from data_structures.quadTree import QuadTree as qt
+from data_structures.quadTreeRegion import QuadTree as qt
 from data_structures.rTree import Rtree as rt
-from data_structures.rangeTree import RangeTree as ranget
-from data_structures.rangeTree import printNode
+from data_structures.kdTree import RangeTree as ranget
+from data_structures.kdTree import printNode
 from data_structures.cosineLSH import CosineLSH
-
-#from data_structures.quadTree import QuadTree as qt
-#from data_structures.rTree import Rtree as rt
-#from data_structures.rangeTree import RangeTree as ranget
-#from data_structures.rangeTree import printNode
 
 global gmax
 global gdim
@@ -38,7 +33,7 @@ def rTreeSearchInput():
         if i < len(name):
             name[i] = (name[i]-gmean)/gmax
         else:
-            name.append(0)
+            name.append(-gmean/gmax)
     return name
 
 # String to Float
@@ -63,10 +58,9 @@ def vectorize(name, max):
 
 def MainMenu():
     print("\nMENU")
-    print("0 - Range Tree")
+    print("0 - KD Tree")
     print("1 - RTree")
     print("2 - Quad Tree")
-    print("3 - KD Tree")
     print("-1 - Exit Program\n")
 
 
@@ -74,11 +68,8 @@ def Menu():
     # menu gia tis diadikasies tou dentrou
     print("\nMENU")
     print("0 - Print Tree")
-    print("1 - Range Search")
-    print("2 - Insert Node")
-    print("3 - Delete Node")
-    print("4 - Update Node")
-    print("5 - kNN")
+    print("1 - Search+LSH")
+    print("2 - Delete Node")
     print("-1 - Exit Program\n")
 
 
@@ -117,7 +108,7 @@ def main():
 
     path = os.getcwd()
     path+="\\data\\scientists"
-    if not(os.path.exists("processedText.csv") or os.path.exists("scientists.csv")) :
+    if not(os.path.exists("processedText.csv") or os.path.exists("scientists.csv")):
         max = 0#epilegw thn megisth timh apo encoding gia na yparxei sto diasthma [0,1]
         indx = 1
         first = True
@@ -136,7 +127,6 @@ def main():
                 scientists.loc[indx] = scient.loc[0]
                 indx+=1
         gmax = max
-        input(str(gmax))
 
     '''     dhmiourgia dianusmatwn       '''
 
@@ -188,8 +178,8 @@ def main():
         temp = pd.concat(temp,axis=1, ignore_index=True)
         temp.fillna(0,inplace=True)#opou nan vazw 0
         gmean = temp.mean(axis=1).mean()
-        input(str(gmean))
-        temp = temp/gmax#1
+
+        temp = (temp-gmean)/gmax#1
         #w2vec end
         '''   epanatopo8ethsh se arxiko DataFrame   '''
         for i in range(0,indx):
@@ -223,29 +213,36 @@ def main():
 
     MainMenu()
     choice = int(input())
-
+    # Main Menu choice
     while choice != -1:
-        # Range Tree
+        # Kd Tree
         if choice == 0:
-            # Diavasma arxeiou
-           
             Menu()
             choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
                 if choice == 0:
-                  
-                    Menu()
-                    choice2 = int(input())
+                  print()
+
+                # Search + LSH
+                elif choice == 1:
+                    print()
+                # Delete Node
+                elif choice == 2:
+                  print()
+
+            Menu()
+            choice2 = int(input())
 
 
-
+        # Rtree
         elif choice == 1:
             Menu()
             gmax = 31215
             gmean = 35.2353000948381
             choice2 = int(input())
             while choice2 != -1:
+                # Print Tree
                 if choice2 == 0:
                     ''' RTree '''
                     gdim = int(
@@ -253,15 +250,27 @@ def main():
                     a = rt(dim=gdim, info=temp[:],
                            min=2, max=4, mval=gmean/gmax)
                     a.printRTree()  # 1.1
-
+                # Search + LSH
                 elif choice2 == 1:
-                    gdim = 44
-                    a = rt(dim=gdim, info=temp[:],
-                           min=2, max=4, mval=gmean/gmax)
-                    search_result = a.rTreeSearch(rTreeSearchInput())
+                    gdim =len(temp[0])-1
 
-                Menu()
-                choice2 = int(input())
+                    a = rt(dim=len(temp[0])-1, info=temp[:],
+                           min=2, max=6, mval=gmean/gmax)
+                    search_result = a.rTreeSearch(rTreeSearchInput())
+                    names = []
+                    i = 0
+                    for s in search_result:
+                        if len(s) > 0:
+                            print(str(s[0][len(s[0])-1]))
+                            names.append(str(s[0][len(s[0])-1]))
+                            i = +1
+                    Menu()
+                    choice2 = int(input())
+                # Delete Node
+                elif choice2 == 2:
+                    print(a)
+
+            
 
         #  QuadTree 
         elif choice == 2:
@@ -269,7 +278,7 @@ def main():
 
             MainMenu()
             choice = int(input())
-
+        
     
     # a = qt(dim = len(temp[0])-1, info = temp[:24])#2.0
     # a.printQTree()#2.1
