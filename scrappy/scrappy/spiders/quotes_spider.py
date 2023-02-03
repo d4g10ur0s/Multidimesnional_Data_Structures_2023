@@ -1,13 +1,9 @@
 import scrapy
 import os
-import json
 import re
-import time
 import pandas as pd
 
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
-
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
@@ -62,21 +58,6 @@ class QuotesSpider(scrapy.Spider):
             f.close()
         except ValueError:
             pass
-
-    '''def write_file(self,scientist):
-        scientist = pd.DataFrame(data=[scientist])
-        path = os.getcwd()
-        try :
-            if os.path.exists(path + "\\scientists"):
-                pass
-            else:
-                os.mkdir(path + "\\scientists")
-            f = open(path + "\\scientists\\"+scientist.loc[0]["name"]+".json","w+")
-            scientist.to_json(f)
-            #input('meta')
-            f.close()
-        except ValueError:
-            pass'''
 
     async def parse_2(self,response):
         path = os.getcwd()
