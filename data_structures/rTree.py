@@ -289,7 +289,7 @@ class Rtree:
             n.installEntry(info)#3. insert info
             self._nodes.append(n)#4. append nodes
         else:#0. tree has been formed
-            self.printRTree()
+            #self.printRTree()
             lindx = self.chooseLeaf(info)#1.invoke choose leaf
             self._nodes[lindx].installEntry(info)#2. install new entry
             if self._nodes[lindx].hasRoom():#3. if has room
