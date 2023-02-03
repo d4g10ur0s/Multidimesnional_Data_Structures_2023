@@ -23,30 +23,25 @@ class QuadNode :
         return self._leaf
     ''' go to next node '''
     def getDirections(self,info,toret=True):
-        '''if not(toret):
-            print(str(self.nw))
-            print(str(self.ne))
-            print(str(self.se))
-            print(str(self.sw))
-            input('a')'''
+        
         arr=[]
         tinfo = pd.DataFrame(data=info[:self._dim])
-        if (pd.DataFrame(data=tinfo).transpose()-self.c).mean().iloc[0] >= 0  :
+        if (pd.DataFrame(data=tinfo).transpose()-self.c).mean(axis=1).iloc[0] >= 0  :
             if toret:
                 return self.nw
             else:
                 arr.append(self.nw)
-        elif (pd.DataFrame(data=tinfo).transpose()-self.c).mean().iloc[0] <= 0   :
+        elif (pd.DataFrame(data=tinfo).transpose()-self.c).mean(axis=1).iloc[0] <= 0   :
             if toret:
                 return self.ne
             else:
                 arr.append(self.ne)
-        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean().iloc[0] <= 0   :
+        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean(axis=1).iloc[0] <= 0   :
             if toret:
                 return self.se
             else:
                 arr.append(self.se)
-        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean().iloc[0] >= 0   :
+        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean(axis=1).iloc[0] >= 0   :
             if toret:
                 return self.sw
             else:
@@ -62,31 +57,7 @@ class QuadNode :
         return self._max>len(self._info)
     def getParent(self):
         return self._parent
-    def get1Coord(self,coord):
-        arr = []
-        for i in self._info:
-            arr.append(i[coord])
-        return arr
-    '''def toNW(self,vector):
-        for i in range(self._dim):
-            if vector[i]-self.c[i]<0:
-                return False
-        return True
-    def toNE(self,vector):
-        for i in range(self._dim):
-            if vector[i]-self.c[i]>0:
-                return False
-        return True
-    def toNW(self,vector):
-        for i in range(self._dim):
-            if vector[i]-self.c[i]<0:
-                return False
-        return True
-    def toNW(self,vector):
-        for i in range(self._dim):
-            if vector[i]-self.c[i]<0:
-                return False
-        return True'''
+
     def getSplit(self,parent):
         self._leaf = False
         ''' info is an array of (x,y,information) elements '''
@@ -94,7 +65,8 @@ class QuadNode :
         temp = []
         for i in self._info:
             temp.append(i[:len(i)-1])#den pairnw to teleutaio
-        self.c = pd.DataFrame(data=temp).transpose().mean()
+        self.c = pd.DataFrame(data=temp).transpose().mean().mean()
+        print(str(self.c))
         #2. create nodes
         #a. NW node
         nw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
@@ -102,7 +74,8 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t).transpose()-self.c).mean().iloc[0] > 0 :
+            print(str((pd.DataFrame(data=t[:len(t)-1]).transpose()-self.c).mean(axis=1)))
+            if (pd.DataFrame(data=t[:len(t)-1]).transpose()-self.c).mean(axis=1).iloc[0] > 0 :
                 nw.insertInfo(t)
                 self._info.pop(i)
             i+=1
@@ -112,7 +85,7 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t).transpose()-self.c).mean().iloc[0] <= 0 :
+            if (pd.DataFrame(data=t[:len(t)-1]).transpose()-self.c).mean(axis=1).iloc[0] <= 0 :
                 ne.insertInfo(t)
                 self._info.pop(i)
             i+=1
@@ -122,7 +95,7 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t).transpose()+self.c).mean().iloc[0] < 0:
+            if (pd.DataFrame(data=t[:len(t)-1]).transpose()+self.c).mean(axis=1).iloc[0] < 0:
                 se.insertInfo(t)
                 self._info.pop(i)
             i+=1
@@ -132,10 +105,14 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t).transpose()+self.c).mean().iloc[0] >= 0 :
+            if (pd.DataFrame(data=t[:len(t)-1]).transpose()+self.c).mean(axis=1).iloc[0] >= 0 :
                 sw.insertInfo(t)
                 self._info.pop(i)
             i+=1
+        nw.printNode()
+        ne.printNode()
+        se.printNode()
+        sw.printNode()
         return nw,ne,se,sw
     def rmEntry(self,entry):
         i=0
@@ -163,15 +140,17 @@ class QuadNode :
         if self._leaf:
             for i in self._info:
                 print(str(i[-1]))
-        '''else:
+        else:
             print(str(self.nw))
             print(str(self.ne))
             print(str(self.se))
-            print(str(self.sw))'''
+            print(str(self.sw))
     def getInfo(self):
         arr = []
         for i in self._info:
-            arr+=i[-1]
+            arr.append(i[-1])
+        if isinstance(arr,str):
+            return [arr]
         return arr
     def adjustPointer(self,indx):
         #1. parent
@@ -268,7 +247,6 @@ class QuadTree :
             #input(str(kids))
             if not(kids==None):
                 for k in kids:
-                    self._nodes[k].printNode()
                     dinfo = self.findLeaves(info,indx=k)
                     try :
                         arr+=dinfo
@@ -280,8 +258,8 @@ class QuadTree :
         indx = self.findLeaves(info)
         arr = []
         for i in indx:
-            arr.append(self._nodes[i].getInfo())
-        return arr
+            arr+=self._nodes[i].getInfo()
+        return [arr]
 
     def qDelete(self,indx,entry):
         self._nodes[indx].rmEntry(entry)
