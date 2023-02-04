@@ -176,7 +176,6 @@ class Rnode :
         indx = 0
         tindx=0
         for i in self._entries:
-            ''' edw ginetai h malakeia '''
             t1=Rnode(self._dim,self._min,self._max,self._mval)
             t1.setEntries(node1.getEntries())
             t2=Rnode(self._dim,self._min,self._max,self._mval)
@@ -273,7 +272,7 @@ class Rtree:
         #self._nodes[i].printNode()
         for j in self._nodes[i].getChildren():
             if self._nodes[i].isLeaf():
-                print(str(j[len(j)-1]))
+                print(str(j[len(j)-2:len(j)]))
                 self.infolen+=1
             else:
                 print("kid : "+str(j))
