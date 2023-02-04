@@ -1,48 +1,51 @@
 # Multidimesnional Data Structures
 
 # Table of Contents
-- [Multidimesnional Data Structures](#multidimesnional-data-structures)
-- [Table of Contents](#table-of-contents)
-- [General Info](#general-info)
-- [Summary](#summary)
-- [Technologies](#technologies)
-- [Installation](#installation)
-- [Contact](#contact)
-- [Contributing](#contributing)
-- [License](#license)
 
 # General Info
-The aim of the project is the implementation of multidimensional data structures in a Programming Environment and their experimental evaluation with real data sets in basic operations: Build, Insert, Delete, Update, Searching (Similarity, kNN, Interval, Stabbing, 3-sided..etc) Queries.
-
-# Summary
-Our task is to implement a multi-dimensional index structure (k-d trees, quad trees, Range Trees and R-trees) to index a set of texts from computer scientists from Wikipedia with the format (Surname: String, #Awards: Integer, Education: text-vector). The index will be created based on the first two fields (surname, #awards) to find the scientists whose names belong to an alphabetical range and have received more awards than a user-defined threshold. Then, similarity queries will be performed on the third field (education) using the LSH method. The task also involves comparing the four methods: k-d + LSH, Quad+LSH, Range+LSH, R-trees + LSH.
+The purpose of this computer science project is to present the focuses on optimizing range and similarity queries on text datasets using quadratic trees, range trees, and R-trees. The project aims to compare the performance of these tree-based data structures in terms of query processing time, space complexity, and accuracy.
 
 
-# Technologies
+# Technologies && Library Versions
 - Python
-- Pandas Library Version 1.3.5
-
+```:Libraries
+gensim              4.2.0
+numpy               1.23.5
+pandas              1.3.5
+scikit-learn        1.2.1
+Scrapy              2.7.1
+```
 # Installation
 
 1. Clone the repo
 ```
 git clone https://github.com/d4g10ur0s/Multidimesnional_Data_Structures_2023.git
 ```
-2. Run Scripts
+
+2. Create a folder called data in the main directory
+
+3. Run Scripts
   - First cd to the scripts directory. Then run the following commands
 ```
 ./run_scrapy.sh
-./run_preprocess.sh
 ```
 - The first command creates a folder called scientists in the data folder where we have multiple json files scrapped from a wikipedia page.
-- The second command creates a csv file inside the data folder where we store all our scientists from our json files
+
+4. Run preprocess.py
+- If you are running preprocess.py for the first time u need to uncomment the following lines once. Run it and then comment them again.
+```python
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    corpus = api.load('text8')
+    print(inspect.getsource(corpus.__class__))
+    print(inspect.getfile(corpus.__class__))
+    model = w2v(corpus)
+    model.save('.\\readyvocab.model')
+```
 
 
 # Contact
 You can always contact us through email : 
-
 - [aledadu@hotmail.com]()
-
 - [rnicolaouceng@gmail]()
 
 # Contributing
