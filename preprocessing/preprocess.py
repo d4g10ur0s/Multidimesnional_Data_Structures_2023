@@ -11,7 +11,7 @@ import csv
 path = os.getcwd()
 sys.path.append(path)
 
-from data_structures.quadTreeRegion import QuadTree as qt
+from data_structures.quadTree import QuadTree as qt
 from data_structures.rTree import Rtree as rt
 from data_structures.kdTree import RangeTree as ranget
 from data_structures.kdTree import printNode
@@ -81,7 +81,6 @@ def vectorize_input(input_text, model, max):
             vector.append(model.wv[k].mean())
         except:
             vector.append(np.nan)
-    print(max - len(vector))
     for i in range(max - len(vector)):
 
         vector.append(0)
@@ -134,7 +133,7 @@ def main():
     word2vec
     '''
     '''
-    AYTA MONO STHN ARXH
+    UNCOMMENT FOR THE FIRST RUN
 
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     corpus = api.load('text8')
@@ -143,7 +142,7 @@ def main():
     model = w2v(corpus)
     model.save('.\\readyvocab.model')
 
-    AYTA MONO STHN ARXH
+    UNCOMMENT FOR THE FIRST RUN
     '''
     #w2v start
     model = w2v.load('readyvocab.model')
@@ -207,9 +206,6 @@ def main():
         temp.append( tdf + scientists.loc[i,["awards","name"]].values.tolist() )
     # menu gia epilogi domis
     # menu gia tis diadikasies tou dentrou
-    print(temp[0])
-
-
 
     MainMenu()
     choice = int(input())
@@ -221,26 +217,25 @@ def main():
             choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
-                if choice == 0:
+                if choice2 == 0:
                   print()
+
 
                 # Search + LSH
-                elif choice == 1:
+                elif choice2 == 1:
                     print()
                 # Delete Node
-                elif choice == 2:
+                elif choice2 == 2:
                   print()
 
-            Menu()
-            choice2 = int(input())
-
-
+            MainMenu()
+            choice = int(input())
         # Rtree
         elif choice == 1:
             Menu()
+            choice2 = int(input())
             gmax = 31215
             gmean = 35.2353000948381
-            choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
                 if choice2 == 0:
@@ -250,6 +245,9 @@ def main():
                     a = rt(dim=gdim, info=temp[:],
                            min=2, max=4, mval=gmean/gmax)
                     a.printRTree()  # 1.1
+
+                    Menu()
+                    choice2 = int(input())
                 # Search + LSH
                 elif choice2 == 1:
                     gdim =len(temp[0])-1
@@ -264,24 +262,35 @@ def main():
                             print(str(s[0][len(s[0])-1]))
                             names.append(str(s[0][len(s[0])-1]))
                             i = +1
+                    
                     Menu()
                     choice2 = int(input())
+
                 # Delete Node
                 elif choice2 == 2:
                     print(a)
+  
+            MainMenu()
+            choice = int(input())
 
-            
-
+        
         #  QuadTree 
         elif choice == 2:
-                
+            Menu()
+            choice2 = int(input())
+            while choice2 != -1:
+
+                # Print
+                if choice2==0:
+                    input('a')
+                    a = qt.printQTree()  
+
+                    Menu()
+                    choice2 = int(input())
 
             MainMenu()
             choice = int(input())
         
-    
-    # a = qt(dim = len(temp[0])-1, info = temp[:24])#2.0
-    # a.printQTree()#2.1
 
 
 if __name__ == "__main__":
