@@ -29,11 +29,17 @@ def rTreeSearchInput():
 
     name = input('Insert a name : ')
     name, max = vectorize(name, gmax)
-    for i in range(gdim):
+    d = 0
+    if input("Search By Award \n(y/n)\n")=="y":
+        d = 1
+
+    for i in range(gdim-d):
         if i < len(name):
             name[i] = (name[i]-gmean)/gmax
         else:
-            name.append(-gmean/gmax)
+            name.append((ord(' ')-gmean)/gmax)
+    if d==1:
+        name.append(int(input("Number of Awards : ")))
     return name
 
 # String to Float
