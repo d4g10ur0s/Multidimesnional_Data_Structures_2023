@@ -7,25 +7,48 @@ import gensim
 import time
 import os
 import csv
+import logging
+import inspect
+
+from data_structures.quadTree import QuadTree as qt
+from data_structures.rTree import Rtree as rt
+from data_structures.rangeTree import RangeTree as ranget
+from data_structures.rangeTree import printNode
+from data_structures.cosineLSH import CosineLSH as clsh
 
 path = os.getcwd()
 sys.path.append(path)
 
-from data_structures.quadTree import QuadTree as qt
-from data_structures.rTree import Rtree as rt
-from data_structures.kdTree import RangeTree as ranget
-from data_structures.kdTree import printNode
-from data_structures.cosineLSH import CosineLSH
-
 global gmax
 global gdim
 global gmean
+global gawmax
 
+def preprocessQuery(dim,qv,model):
+    qvectors = {}
+    i = 0
+    qvectors[str(i)] = []
+    for k in qv:
+        try:
+            qvectors[str(i)].append(model.wv[k].mean())
+        except:
+            qvectors[str(i)].append(np.nan)
+
+    df_query = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in qvectors.items() ]))
+    df_query.fillna(value=0.0,inplace=True)
+
+    if dim-len(df_query) > 0:
+        d = pd.DataFrame(data=np.zeros((dim, 1)))
+        df_query = pd.concat([d,df_query], axis=1, join='outer', ignore_index=False)
+        df_query.fillna(value=0.0,inplace=True)
+
+    return df_query[str(0)]
 
 def rTreeSearchInput():
     global gmax
     global gdim
     global gmean
+    global gawmax
 
     name = input('Insert a name : ')
     name, max = vectorize(name, gmax)
@@ -36,22 +59,21 @@ def rTreeSearchInput():
     for i in range(gdim-d):
         if i < len(name):
             name[i] = (name[i]-gmean)/gmax
+            #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            name.append((ord(' ')-gmean)/gmax)
+            name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            #name.append(0)#2. QUADTREE
     if d==1:
-        name.append(int(input("Number of Awards : ")))
+        name.append(int(input("Number of Awards : "))/gawmax)
     return name
 
 # String to Float
-
-
 def string2float(arr):
     t = []
     for i in range(0, len(arr)-1):
         t.append(float(arr[i]))
     t.append(arr[len(arr)-1])
     return t
-
 
 def vectorize(name, max):
     nname = []
@@ -68,7 +90,6 @@ def MainMenu():
     print("1 - RTree")
     print("2 - Quad Tree")
     print("-1 - Exit Program\n")
-
 
 def Menu():
     # menu gia tis diadikasies tou dentrou
@@ -87,6 +108,7 @@ def vectorize_input(input_text, model, max):
             vector.append(model.wv[k].mean())
         except:
             vector.append(np.nan)
+    print(max - len(vector))
     for i in range(max - len(vector)):
 
         vector.append(0)
@@ -110,6 +132,7 @@ def main():
     global gmax
     global gdim
     global gmean
+    global gawmax
 
     path = os.getcwd()
     path+="\\data\\scientists"
@@ -133,22 +156,16 @@ def main():
                 indx+=1
         gmax = max
 
-    '''     dhmiourgia dianusmatwn       '''
-
+    '''   word2vec   '''
     '''
-    word2vec
-    '''
-    '''
-    UNCOMMENT FOR THE FIRST RUN
-
+    AYTA MONO STHN ARXH
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     corpus = api.load('text8')
     print(inspect.getsource(corpus.__class__))
     print(inspect.getfile(corpus.__class__))
     model = w2v(corpus)
     model.save('.\\readyvocab.model')
-
-    UNCOMMENT FOR THE FIRST RUN
+    AYTA MONO STHN ARXH
     '''
     #w2v start
     model = w2v.load('readyvocab.model')
@@ -183,121 +200,120 @@ def main():
         temp = pd.concat(temp,axis=1, ignore_index=True)
         temp.fillna(0,inplace=True)#opou nan vazw 0
         gmean = temp.mean(axis=1).mean()
-
-        temp = (temp-gmean)/gmax#1
+        temp = (temp-gmean)/gmax#1. RTree
+        #temp = (temp-gmean)/gmax#2. QueadTree
         #w2vec end
         '''   epanatopo8ethsh se arxiko DataFrame   '''
         for i in range(0,indx):
             scientists.at[i,"processed_name"] = temp.iloc[:][i].values.tolist()
-
         df_input.columns=scientists.loc[:]["name"]
-
-        ''' RTree '''
-        gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
-        '''
-            >Possible parameter values
-            1. polwsh mean diairesh me max, max = 8, mval=gmean/gmax, _mval=mval
-            2. anti gia 0 pairnw (ord(space)-gmean)/gmax, mval=gmean/gmax, _mval=mval*1.5, max=8
-        '''
         ''' to scientists paei gia save '''
-        # lsh = clsh(df_input,scientists.iloc[:]["education_text"],len(df_input))
         writeCsv(scientists,df_input)
+        ''' save gmean and gmax '''
 
+    #read and start
     scientists,df_input = readCsv()
 
     temp = []
+    ''' kanonikopoihsh awards '''
+    gawmax = 0
+    for i in scientists.loc[:]["awards"]:
+        if gawmax < int(i):
+            gawmax = i
+    tawards = scientists.loc[:,["awards"]]
+    scientists.loc[:,["awards"]] = scientists.loc[:,["awards"]]/gawmax
+    ''' kanonikopoihsh awards '''
+
     ''' from dataframe to list '''
     for i in range(0,len(scientists)):
         tdf = list(np.float64(scientists.loc[i,"processed_name"]))
-        temp.append( tdf + scientists.loc[i,["awards","name"]].values.tolist() )
-    # menu gia epilogi domis
-    # menu gia tis diadikasies tou dentrou
+        temp.append( tdf + scientists.loc[i,["awards","name"]].values.tolist() + [tawards.loc[i]["awards"]] )
+    ''' from dataframe to list gia na pernaei se domh '''
+
+    ''' lsh model '''
+    lsh = clsh(df_input,scientists.iloc[:]["education_text"],len(df_input))
 
     MainMenu()
-    choice = int(input())
+    choice1 = int(input())
     # Main Menu choice
-    while choice != -1:
+    while choice1 != -1:
         # Kd Tree
-        if choice == 0:
+        if choice1 == 0:
             Menu()
             choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
-                if choice2 == 0:
+                if choice == 0:
                   print()
-
 
                 # Search + LSH
-                elif choice2 == 1:
+                elif choice == 1:
                     print()
                 # Delete Node
-                elif choice2 == 2:
+                elif choice == 2:
                   print()
 
-            MainMenu()
-            choice = int(input())
-        # Rtree
-        elif choice == 1:
             Menu()
             choice2 = int(input())
+
+
+        # Rtree
+        elif choice1 == 1:
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
             gmax = 31215
             gmean = 35.2353000948381
+            a = rt(dim=gdim, info=temp[:],min=2, max=8, mval=gmean/gmax)
+            Menu()
+            choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
                 if choice2 == 0:
                     ''' RTree '''
-                    gdim = int(
-                        input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
-                    a = rt(dim=gdim, info=temp[:],
-                           min=2, max=4, mval=gmean/gmax)
                     a.printRTree()  # 1.1
-
-                    Menu()
-                    choice2 = int(input())
                 # Search + LSH
                 elif choice2 == 1:
-                    gdim =len(temp[0])-1
-
-                    a = rt(dim=len(temp[0])-1, info=temp[:],
-                           min=2, max=6, mval=gmean/gmax)
                     search_result = a.rTreeSearch(rTreeSearchInput())
+                    to_del = {}
                     names = []
+                    awards = []
                     i = 0
                     for s in search_result:
                         if len(s) > 0:
-                            print(str(s[0][len(s[0])-1]))
-                            names.append(str(s[0][len(s[0])-1]))
+                            print(str(s[0][len(s[0])-2:len(s[0])]))
+                            names.append(str(s[0][len(s[0])-2]))
+                            awards.append(str(s[0][len(s[0])-1]))
+                            to_del[str(i)]=s[1]
                             i = +1
-                    
-                    Menu()
-                    choice2 = int(input())
-
+                    while 1 :
+                        try :
+                            if input("Delete Entry \n(y\\n)\n")=="y":
+                                choice = int(input('Delete entry : '))
+                                dvec = search_result[choice-1][0]#h malakeia ginetai apo to choice-1
+                                a.deleteNode(to_del[str(choice-1)],dvec[:gdim])
+                            if input("Education Similarity Query\n(y\\n)\n") == "y":
+                                qv = gensim.utils.simple_preprocess(input("Query : \n"))
+                                df_query = preprocessQuery(len(df_input),qv,model)
+                                sres = lsh.lshQuery2(df_query,names,df_input,window=1)
+                        except ValueError:
+                            print("Error !")
+                        finally:
+                            if str(input())=="break":
+                                break
                 # Delete Node
                 elif choice2 == 2:
                     print(a)
-  
+                Menu()
+                choice2 = int(input())
+
+        #  QuadTree
+        elif choice1 == 2:
+            a = qt(dim = gdim, info = temp[:],max=8)#2.0
+            a.printQTree()#2.1
             MainMenu()
-            choice = int(input())
+            choice1 = int(input())
 
-        
-        #  QuadTree 
-        elif choice == 2:
-            Menu()
-            choice2 = int(input())
-            while choice2 != -1:
-
-                # Print
-                if choice2==0:
-                    input('a')
-                    a = qt.printQTree()  
-
-                    Menu()
-                    choice2 = int(input())
-
-            MainMenu()
-            choice = int(input())
-        
-
+        MainMenu()
+        choice1 = int(input())
 
 if __name__ == "__main__":
     main()
