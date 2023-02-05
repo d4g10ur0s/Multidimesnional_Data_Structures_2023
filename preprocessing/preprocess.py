@@ -10,14 +10,15 @@ import csv
 import logging
 import inspect
 
-from data_structures.quadTree import QuadTree as qt
-from data_structures.rTree import Rtree as rt
-from data_structures.rangeTree import RangeTree as ranget
-from data_structures.rangeTree import printNode
-from data_structures.cosineLSH import CosineLSH as clsh
 
 path = os.getcwd()
 sys.path.append(path)
+
+from data_structures.quadTree import QuadTree as qt
+from data_structures.rTree import Rtree as rt
+from data_structures.kdTree import KDTree as kd
+from data_structures.kdTree import printNode
+from data_structures.cosineLSH import CosineLSH as clsh
 
 global gmax
 global gdim
@@ -201,7 +202,7 @@ def main():
         temp.fillna(0,inplace=True)#opou nan vazw 0
         gmean = temp.mean(axis=1).mean()
         temp = (temp-gmean)/gmax#1. RTree
-        #temp = (temp-gmean)/gmax#2. QueadTree
+        #temp = (temp-gmean)/gmax#2. QueadTreePercentage
         #w2vec end
         '''   epanatopo8ethsh se arxiko DataFrame   '''
         for i in range(0,indx):
@@ -307,10 +308,17 @@ def main():
 
         #  QuadTree
         elif choice1 == 2:
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
             a = qt(dim = gdim, info = temp[:],max=8)#2.0
-            a.printQTree()#2.1
-            MainMenu()
-            choice1 = int(input())
+
+            Menu()
+            choice2 = int(input())
+            while choice2 != -1:
+                if choice2 == 0:
+                    a.printQTree()#2.1
+
+            Menu()
+            choice2 = int(input())
 
         MainMenu()
         choice1 = int(input())
