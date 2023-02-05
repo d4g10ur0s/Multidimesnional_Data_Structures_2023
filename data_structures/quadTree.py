@@ -148,7 +148,7 @@ class QuadNode :
     def getInfo(self):
         arr = []
         for i in self._info:
-            arr.append(i[-1])
+            arr.append(i[len(i)-2:len(i)])
         if isinstance(arr,str):
             return [arr]
         return arr
