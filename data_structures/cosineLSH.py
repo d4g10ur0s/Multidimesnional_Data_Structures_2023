@@ -87,7 +87,7 @@ class CosineLSH:
         print(str(dvec))
         #calc cosine similarity
 
-        distance_col = 'distance'
+        distance_col = 'distance' 
         nearest_neighbors = pd.DataFrame({
             'id': df_input.loc[:,names].columns, distance_col: distance
         }).sort_values(distance_col).reset_index(drop=True)
