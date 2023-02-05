@@ -310,13 +310,18 @@ def main():
         elif choice1 == 2:
             gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
             a = qt(dim = gdim, info = temp[:],max=8)#2.0
-
-            Menu()
-            choice2 = int(input())
-            while choice2 != -1:
-                if choice2 == 0:
-                    a.printQTree()#2.1
-
+            a.printQTree()#2.1
+            while 1:
+                try :
+                    arr = a.qSearch(rTreeSearchInput())
+                    for i in range(len(arr)) :
+                        print("*"*10+" " + str(i)+ " " + "*"*10)
+                        print(str(arr[i]))
+                except ValueError:
+                    print("Error !")
+                finally:
+                    if str(input())=="break":
+                        break
             Menu()
             choice2 = int(input())
 
