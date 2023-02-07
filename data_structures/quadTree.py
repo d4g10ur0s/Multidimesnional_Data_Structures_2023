@@ -2,6 +2,7 @@ import time
 import math
 import random as rd
 import pandas as pd
+import numpy as np
 
 class QuadNode :
     def __init__(self,dim,max=4,parent=None,leaf = True):
@@ -18,30 +19,31 @@ class QuadNode :
         self.ne = None
         self.se = None
         self.sw = None
-        self.c = None
+        self.cname = None
+        self.cawards = None
     def isLeaf(self):
         return self._leaf
     ''' go to next node '''
     def getDirections(self,info,toret=True):
-
         arr=[]
-        tinfo = pd.DataFrame(data=info[:self._dim])
-        if (pd.DataFrame(data=tinfo).transpose()-self.c).mean(axis=1).iloc[0] >= 0  :
+        m = pd.DataFrame(data=info[:self._dim]).mean().loc[0]
+
+        if m-self.cname >= 0 and info[self._dim]-self.cawards >=0 :# y >= 0 , x >= 0
             if toret:
                 return self.nw
             else:
                 arr.append(self.nw)
-        elif (pd.DataFrame(data=tinfo).transpose()-self.c).mean(axis=1).iloc[0] <= 0   :
+        elif m-self.cname >= 0 and info[self._dim]-self.cawards <= 0 :# y <= 0 , x >= 0
             if toret:
                 return self.ne
             else:
                 arr.append(self.ne)
-        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean(axis=1).iloc[0] <= 0   :
+        elif m-self.cname <= 0 and info[self._dim]-self.cawards <= 0 :# y =< 0 , x <= 0
             if toret:
                 return self.se
             else:
                 arr.append(self.se)
-        elif (pd.DataFrame(data=tinfo).transpose()+self.c).mean(axis=1).iloc[0] >= 0   :
+        elif m-self.cname <= 0 and info[self._dim]-self.cawards >= 0 :# y >= 0 , x =< 0
             if toret:
                 return self.sw
             else:
@@ -62,11 +64,17 @@ class QuadNode :
         self._leaf = False
         ''' info is an array of (x,y,information) elements '''
         #1. se center to b the mean of x and y
-        temp = []
+        tmean = []
+        self.cawards = 0
+        self.cname = 0
         for i in self._info:
-            temp.append(i[:self._dim])#den pairnw ta teleutaia
-        self.c = pd.DataFrame(data=temp).transpose().mean().mean()
-        #print(str(self.c))
+            m = pd.DataFrame(data=i[:self._dim]).mean().loc[0]
+            tmean.append(m)
+            self.cname += m
+            self.cawards += i[self._dim]
+        # get the means
+        self.cname /= len(self._info)
+        self.cawards /= len(self._info)
         #2. create nodes
         #a. NW node
         nw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
@@ -74,20 +82,22 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            print(str((pd.DataFrame(data=t[:self._dim]).transpose()-self.c).mean(axis=1)))
-            if (pd.DataFrame(data=t[:self._dim]).transpose()-self.c).mean(axis=1).iloc[0] > 0 :
+            if tmean[i]-self.cname >= 0 and t[self._dim]-self.cawards >=0 :# y >= 0 , x >= 0
                 nw.insertInfo(t)
                 self._info.pop(i)
-            i+=1
+                tmean.pop(i)
+            else:
+                i+=1
         #b. NE node
         ne = QuadNode(self._dim,self._max,parent=parent,leaf=True)
         ne.clearNode()
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t[:self._dim]).transpose()-self.c).mean(axis=1).iloc[0] <= 0 :
+            if tmean[i]-self.cname >= 0 and t[self._dim]-self.cawards <=0 :# y <= 0 , x > 0
                 ne.insertInfo(t)
                 self._info.pop(i)
+                tmean.pop(i)
             i+=1
         #c. SE node
         se = QuadNode(self._dim,self._max,parent=parent,leaf=True)
@@ -95,24 +105,21 @@ class QuadNode :
         i=0
         while i < len(self._info) :
             t = self._info[i]
-            if (pd.DataFrame(data=t[:self._dim]).transpose()+self.c).mean(axis=1).iloc[0] < 0:
+            if tmean[i]-self.cname <= 0 and t[self._dim]-self.cawards <= 0 :# y < 0 , x <= 0
                 se.insertInfo(t)
                 self._info.pop(i)
+                tmean.pop(i)
             i+=1
         #d. SW node
         sw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
         sw.clearNode()
         i=0
-        while i < len(self._info) :
+        while i < len(self._info) :# y > 0 , x < 0
             t = self._info[i]
-            if (pd.DataFrame(data=t[:self._dim]).transpose()+self.c).mean(axis=1).iloc[0] >= 0 :
-                sw.insertInfo(t)
-                self._info.pop(i)
+            sw.insertInfo(t)
+            self._info.pop(i)
+            tmean.pop(i)
             i+=1
-        nw.printNode()
-        ne.printNode()
-        se.printNode()
-        sw.printNode()
         return nw,ne,se,sw
     def rmEntry(self,entry):
         i=0
@@ -238,13 +245,11 @@ class QuadTree :
         return lindx
 
     def findLeaves(self,info,indx=0):
-        #input(str(info))
         arr = []
         if self._nodes[indx].isLeaf():
             return indx
         else:
             kids = self._nodes[indx].getDirections(info,toret=False)
-            #input(str(kids))
             if not(kids==None):
                 for k in kids:
                     dinfo = self.findLeaves(info,indx=k)
