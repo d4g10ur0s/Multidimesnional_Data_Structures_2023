@@ -9,16 +9,16 @@ import os
 import csv
 import logging
 import inspect
-
-
-path = os.getcwd()
-sys.path.append(path)
+import random as rnd
 
 from data_structures.quadTree import QuadTree as qt
 from data_structures.rTree import Rtree as rt
-from data_structures.kdTree import KDTree as kd
-from data_structures.kdTree import printNode
+from data_structures.rangeTree import RangeTree as ranget
+from data_structures.rangeTree import printNode
 from data_structures.cosineLSH import CosineLSH as clsh
+
+path = os.getcwd()
+sys.path.append(path)
 
 global gmax
 global gdim
@@ -45,7 +45,7 @@ def preprocessQuery(dim,qv,model):
 
     return df_query[str(0)]
 
-def rTreeSearchInput():
+def rTreeSearchInput(quad = False):
     global gmax
     global gdim
     global gmean
@@ -56,16 +56,19 @@ def rTreeSearchInput():
     d = 0
     if input("Search By Award \n(y/n)\n")=="y":
         d = 1
-
     for i in range(gdim-d):
         if i < len(name):
             name[i] = (name[i]-gmean)/gmax
             #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            name.append((ord(' ')-gmean)/gmax)#1. RTREE
-            #name.append(0)#2. QUADTREE
+            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
+        if quad :
+            name.append(-gmean/gmax)
         name.append(int(input("Number of Awards : "))/gawmax)
+    elif quad==True:
+        name.append(0)
     return name
 
 # String to Float
@@ -79,9 +82,9 @@ def string2float(arr):
 def vectorize(name, max):
     nname = []
     for i in name:
-        nname.append(ord(i))
-        if max < ord(i):
-            max = ord(i)
+        nname.append(ord(str(i)))
+        if max < ord(str(i)):
+            max = ord(str(i))
     return [nname, max]
 
 
@@ -143,11 +146,12 @@ def main():
         first = True
         scientists = None
         ''' anoigw json file me scientists '''
+        gmean = 0
         for sc in os.listdir(path):
             scient = pd.read_json(path + "\\"+sc)
             #scient = json.load(f)
             pname , max = vectorize(scient.iloc[0]['name'], max)
-            m = pd.DataFrame(pname).mean()
+            gmean += pd.DataFrame(pname).mean()
             scient.insert(3,"processed_name", [pname], True)
             if first == True :
                 scientists = scient
@@ -156,6 +160,7 @@ def main():
                 scientists.loc[indx] = scient.loc[0]
                 indx+=1
         gmax = max
+        gmean = gmean/indx
 
     '''   word2vec   '''
     '''
@@ -200,9 +205,8 @@ def main():
             temp.append(pd.DataFrame(scientists.iloc[i]["processed_name"]))#normalization
         temp = pd.concat(temp,axis=1, ignore_index=True)
         temp.fillna(0,inplace=True)#opou nan vazw 0
-        gmean = temp.mean(axis=1).mean()
+        gmean = gmean.loc[0]
         temp = (temp-gmean)/gmax#1. RTree
-        #temp = (temp-gmean)/gmax#2. QueadTreePercentage
         #w2vec end
         '''   epanatopo8ethsh se arxiko DataFrame   '''
         for i in range(0,indx):
@@ -211,8 +215,18 @@ def main():
         ''' to scientists paei gia save '''
         writeCsv(scientists,df_input)
         ''' save gmean and gmax '''
+        f = open(path+"\\var.txt","w+")
+        f.write(str(gmean)+'\n')
+        f.write(str(gmax)+'\n')
+        f.close()
 
     #read and start
+    f = open(path+"\\var.txt","r+")
+    lines= f.readlines()
+    gmean = np.float64(lines[0])
+    gmax = np.float64(lines[1])
+    f.close()
+
     scientists,df_input = readCsv()
 
     temp = []
@@ -261,9 +275,7 @@ def main():
         # Rtree
         elif choice1 == 1:
             gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
-            gmax = 31215
-            gmean = 35.2353000948381
-            a = rt(dim=gdim, info=temp[:],min=2, max=8, mval=gmean/gmax)
+            a = rt(dim=gdim, info=temp[:],min=2, max=4, mval=gmean/gmax)
             Menu()
             choice2 = int(input())
             while choice2 != -1:
@@ -309,11 +321,12 @@ def main():
         #  QuadTree
         elif choice1 == 2:
             gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
-            a = qt(dim = gdim, info = temp[:],max=8)#2.0
+            rnd.shuffle(temp[:])
+            a = qt(dim = gdim, info = temp[:] ,max=4)#2.0
             a.printQTree()#2.1
             while 1:
                 try :
-                    arr = a.qSearch(rTreeSearchInput())
+                    arr = a.qSearch(rTreeSearchInput(quad=True))
                     for i in range(len(arr)) :
                         print("*"*10+" " + str(i)+ " " + "*"*10)
                         print(str(arr[i]))
@@ -322,8 +335,6 @@ def main():
                 finally:
                     if str(input())=="break":
                         break
-            Menu()
-            choice2 = int(input())
 
         MainMenu()
         choice1 = int(input())
