@@ -176,7 +176,6 @@ class Rnode :
         indx = 0
         tindx=0
         for i in self._entries:
-            ''' edw ginetai h malakeia '''
             t1=Rnode(self._dim,self._min,self._max,self._mval)
             t1.setEntries(node1.getEntries())
             t2=Rnode(self._dim,self._min,self._max,self._mval)
@@ -273,7 +272,7 @@ class Rtree:
         #self._nodes[i].printNode()
         for j in self._nodes[i].getChildren():
             if self._nodes[i].isLeaf():
-                print(str(j[len(j)-1]))
+                print(str(j[len(j)-2:len(j)]))
                 self.infolen+=1
             else:
                 print("kid : "+str(j))
@@ -374,6 +373,44 @@ class Rtree:
                     else:
                         res.append((entry[1],indx))
             #endwhile
+        #endfor
+        if indx==0:
+            t = self._sresult
+            self._sresult=None#reset to none
+            return t
+        else:
+            return res
+    def rTreeRangeSearch(self,vector,indx=0,dim1=0,dim2=None):
+        if indx==0:
+            self._sresult=[]
+
+        res = []#temp storage
+        for entry in self._nodes[indx].getEntries():
+            #apo to entry 8elw mono to interval
+            intervals = entry[0]
+            d=dim1
+            if not dim2 == None :
+                while d < dim2 :
+                    interval = intervals[d]
+                    if vector[d][1] <= interval[1] or vector[d][0]>=interval[0]:
+                        d+=1
+                    else:
+                        break#if it doesn't overlap , then continue with next entry
+                    if d==dim2:
+                        if not self._nodes[indx].isLeaf():
+                            self._sresult+=self.rTreeSearch(vector,entry[1])
+                        else:
+                            res.append((entry[1],indx))
+                #endwhile
+            else:
+                interval = intervals[d]
+                if vector[d][1] <= interval[1] or vector[d][0]>=interval[0]:
+                    if not self._nodes[indx].isLeaf():
+                        self._sresult+=self.rTreeSearch(vector,entry[1])
+                    else:
+                        res.append((entry[1],indx))
+                else:
+                    continue#if it doesn't overlap , then continue with next entry
         #endfor
         if indx==0:
             t = self._sresult
