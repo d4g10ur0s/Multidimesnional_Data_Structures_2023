@@ -26,14 +26,14 @@ class QuadNode :
     ''' go to next node '''
     def getDirections(self,info,toret=True):
         arr=[]
-        t = pd.DataFrame(data=info[:self._dim+1]).loc[:][0]
+        t = pd.DataFrame(data=info[:self._dim]).loc[:][0]
         cosValue=( t.dot(self.cmean) / (np.sqrt(np.square(self.cmean).sum()) * np.sqrt(np.square(t).sum() ) ) )
-        if cosValue >= 0 and cosValue <= 1/2 :
+        if cosValue > 0 and cosValue <= 1/2 :
             if toret:
                 return self.nw
             else:
                 arr.append(self.nw)
-        elif cosValue >= 1/2:
+        elif cosValue > 1/2:
             if toret:
                 return self.ne
             else:
@@ -43,7 +43,7 @@ class QuadNode :
                 return self.se
             else:
                 arr.append(self.se)
-        elif cosValue <= 0 and cosValue >= -1/2 :
+        elif cosValue <= 0 and cosValue > -1/2 :
             if toret:
                 return self.sw
             else:
@@ -67,15 +67,14 @@ class QuadNode :
         #1. extract the vectors
         #evec = []
         #for i in self._info:
-        #    evec.append(i[:self._dim+1])
+        #    evec.append(i[:self._dim])
         #self.cmean = pd.DataFrame(data=evec).mean(axis=0)#dianusma sthlh
-        #self.cmean = pd.DataFrame(data=np.random.randn(self._dim+1, 1)).loc[:][0]
-        #self.cmean = pd.DataFrame(data=self._info[0][:self._dim+1]).loc[:][0]
+        self.cmean = pd.DataFrame(data=np.random.randn(self._dim, 1)).loc[:][0] - 0.5
+        #self.cmean = pd.DataFrame(data=self._info[0][:self._dim]).loc[:][0]
         cosValue = []
         for i in self._info:
-            t = pd.DataFrame(data=i[:self._dim+1]).loc[:][0]
+            t = pd.DataFrame(data=i[:self._dim]).loc[:][0]
             cosValue.append( t.dot(self.cmean) / (np.sqrt(np.square(self.cmean).sum()) * np.sqrt(np.square(t).sum() ) ) )
-        #input(str(cosValue))
         #2. create nodes
         #a. NW node
         nw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
@@ -90,16 +89,16 @@ class QuadNode :
         sw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
         sw.clearNode()
         for i in range(len(cosValue)) :
-            if cosValue[i] >= 0 and cosValue[i] <= 1/2 :
+            if cosValue[i] > 0 and cosValue[i] <= 1/2 :
                 t = self._info[i]
                 nw.insertInfo(t)
-            elif cosValue[i] >= 1/2:
+            elif cosValue[i] > 1/2:
                 t = self._info[i]
                 ne.insertInfo(t)
             elif cosValue[i] <= -1/2 :
                 t = self._info[i]
                 se.insertInfo(t)
-            elif cosValue[i] <= 0 and cosValue[i] >= -1/2 :
+            elif cosValue[i] <= 0 and cosValue[i] > -1/2 :
                 t = self._info[i]
                 sw.insertInfo(t)
         return nw,ne,se,sw
@@ -112,34 +111,31 @@ class QuadNode :
             i+=1
     def nodeSplitted(self,kids):
         self._leaf=False
-        temp = self._info
         self._info=None
         self.nw=(kids)
         self.ne=(kids+1)
         self.se=(kids+2)
         self.sw=(kids+3)
-        return temp
+
     def clearNode(self):
         self._info = []
     def isEmpty(self):
         return (self._info==None or len(self._info) == 0)
     def getCoordinates(self):
         return [self.nw,self.ne,self.se,self.sw]
-    def printNode(self):
-        if self._leaf:
-            for i in self._info:
-                print(str(i[len(i)-2:len(i)]))
-        else:
-            print(str(self.nw))
-            print(str(self.ne))
-            print(str(self.se))
-            print(str(self.sw))
+    def printNode(self,k):
+        for i in self._info:
+            print(str(i[len(i)-2:len(i)]))
+        #else:
+        #    print(str(self.nw))
+        #    print(str(self.ne))
+        #    print(str(self.se))
+        #    print(str(self.sw))
     def getInfo(self):
         arr = []
         for i in self._info:
             arr.append(i[len(i)-2:len(i)])
-        if isinstance(arr,str):
-            return [arr]
+
         return arr
     def adjustPointer(self,indx):
         #1. parent
@@ -172,12 +168,11 @@ class cosQuadTree :
     def printQTree(self,i=0):
         print("Node : " + str(i))
         if self._nodes[i].isLeaf():
-            self._nodes[i].printNode()
+            self._nodes[i].printNode(i)
         else:
             kids = self._nodes[i].getCoordinates()
             for j in kids:
                 self.printQTree(j)
-
     def insert(self,info):
         #0. tree has not been formed
         if self._nodes == None :
@@ -197,12 +192,9 @@ class cosQuadTree :
                 #3. leaf node has not room , split it
                 rn1,rn2,rn3,rn4 = self._nodes[lindx].getSplit(lindx)
                 #insert nodes to tree
-                snode_info = self._nodes[lindx].nodeSplitted(len(self._nodes))
+                self._nodes[lindx].nodeSplitted(len(self._nodes))
                 self._nodes+=[rn1,rn2,rn3,rn4]
-                snode_info.append(info)
-                #4. insert again
-                for ninfo in snode_info:
-                    self.insert(ninfo)
+                self.insert(info)#den exw kanei akoma insert
 
     def findLeaf(self,info):
         #1. start from root

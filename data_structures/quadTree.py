@@ -98,7 +98,8 @@ class QuadNode :
                 ne.insertInfo(t)
                 self._info.pop(i)
                 tmean.pop(i)
-            i+=1
+            else :
+                i+=1
         #c. SE node
         se = QuadNode(self._dim,self._max,parent=parent,leaf=True)
         se.clearNode()
@@ -109,7 +110,8 @@ class QuadNode :
                 se.insertInfo(t)
                 self._info.pop(i)
                 tmean.pop(i)
-            i+=1
+            else:
+                i+=1
         #d. SW node
         sw = QuadNode(self._dim,self._max,parent=parent,leaf=True)
         sw.clearNode()
@@ -156,8 +158,6 @@ class QuadNode :
         arr = []
         for i in self._info:
             arr.append(i[len(i)-2:len(i)])
-        if isinstance(arr,str):
-            return [arr]
         return arr
     def adjustPointer(self,indx):
         #1. parent
@@ -186,23 +186,9 @@ class QuadTree :
                 print(10*"*"+" " +str(k)+" "+"*"*10)
                 self.insert(i)
                 k+=1
-    ''' to transform from dim to 2d
-    def fromDim2D(self,info,ins=True):
-        x=0
-        for i in range(self._dim-1):
-            x+=info[i]
-        if ins:
-            return (x/(self._dim-1),info[-2],info[-1])
-        else:
-            try :
-                return (x/(self._dim-1),info[self._dim-1])#epeidh den pernw ta awards
-            except :
-                return (x/(self._dim-1),0)#epeidh den pernw ta awards
-    Vghke Akuro!
-    '''
+
     def printQTree(self,i=0):
         print("Node : " + str(i))
-        #input(str(self._nodes[i].printNode()))
         if self._nodes[i].isLeaf():
             self._nodes[i].printNode()
         else:
@@ -264,7 +250,7 @@ class QuadTree :
         arr = []
         for i in indx:
             arr+=self._nodes[i].getInfo()
-        return [arr]
+        return arr
 
     def qDelete(self,indx,entry):
         self._nodes[indx].rmEntry(entry)
