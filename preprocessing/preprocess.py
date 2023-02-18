@@ -62,8 +62,8 @@ def rTreeSearchInput(quad = False):
             name[i] = (name[i]-gmean)/gmax
             #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            name.append((ord(' ')-gmean)/gmax)#1. RTREE
-            #name.append(-gmean/gmax)#2. QUADTREE
+            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
         if quad :
             name.append(-gmean/gmax)#2. QUADTREE
@@ -97,6 +97,7 @@ def MainMenu():
     print("0 - KD Tree")
     print("1 - RTree")
     print("2 - Quad Tree")
+    print("3 - Cosine Quad Tree")
     print("-1 - Exit Program\n")
 
 def Menu():
@@ -256,18 +257,18 @@ def main():
     choice1 = int(input())
     # Main Menu choice
     while choice1 != -1:
-        ''' gia na douleuei pio euelikta '''
-        gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
-        if gdim == len(temp[0]) - 2 :
-            pass
-        else:
-            ttemp = []
-            for i in temp:
-                ttemp.append( i[:gdim] + i[len(i)-2:] )
-            temp = ttemp
-        # Kd Tree
-        kd = kdtree(temp[:])
         if choice1 == 0:
+            ''' gia na douleuei pio euelikta '''
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
+            if gdim == len(temp[0]) - 2 :
+                pass
+            else:
+                ttemp = []
+                for i in temp:
+                    ttemp.append( i[:gdim] + i[len(i)-2:] )
+                    temp = ttemp
+            # Kd Tree
+            kd = kdtree(temp[:])
             Menu()
             choice2 = int(input())
             while choice2 != -1:
@@ -347,18 +348,26 @@ def main():
             while 1:
                 try :
                     arr = a.qSearch(rTreeSearchInput(quad=True))
-                    for i in range(len(arr)) :
-                        print("*"*10+" " + str(i)+ " " + "*"*10)
-                        print(str(arr[i]))
+                    names = []
+                    count = 0
+                    for i in arr :
+                        print("*"*10+" " + str(count)+ " " + "*"*10)
+                        print(str("Name : " + str(i[0]) + "\nAwards : " + str(i[1])))
+                        count+=1
+                        names.append(i[0])
+                    if input("Education Similarity Query\n(y\\n)\n") == "y":
+                        qv = gensim.utils.simple_preprocess(input("Query : \n"))
+                        df_query = preprocessQuery(len(df_input),qv,model)
+                        sres = lsh.lshQuery2(df_query,names,df_input,window=1)
                 except ValueError:
                     print("Error !")
                 finally:
                     if str(input())=="break":
                         break
-        else:
-            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
+        elif choice1 == 3:
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
             rnd.shuffle(temp[:])
-            a = cqt(dim = gdim, info = temp[:] ,max=4)#2.0
+            a = cqt(dim = gdim, info = temp[:] ,max=32)#2.0
             a.printQTree()#2.1
 
         MainMenu()
