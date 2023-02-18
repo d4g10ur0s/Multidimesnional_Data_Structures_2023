@@ -57,6 +57,7 @@ class Node:
         self.left = left
         self.right = right
         self.name = name
+        self.awards = awards
 
     def kd_search(self,name,dim=0):
         if dim+1==self.dim:
