@@ -17,8 +17,8 @@ class KDTree:
         median = points[mid][:-1]
 
         # Recursively build the left and right subtrees
-        left_subtree = self.build(points[:mid], (dim + 1) % len(points[0]))
-        right_subtree = self.build(points[mid + 1:], (dim + 1) % len(points[0]))
+        left_subtree = self.build(points[:mid], (dim + 1) % (len(points[0])-1))
+        right_subtree = self.build(points[mid + 1:], (dim + 1) % (len(points[0])-1))
 
         # Return the current node
         return Node(median, left_subtree, right_subtree,points[mid][-2],points[mid][-1])
@@ -48,7 +48,7 @@ class KDTree:
         return root
 
     def searching(self,name):
-        self.root.kd_search(name)
+        return self.root.kd_search(name)
 
 
 class Node:
@@ -58,6 +58,7 @@ class Node:
         self.right = right
         self.name = name
         self.awards = awards
+        self.dim = len(point)
 
     def kd_search(self,name,dim=0):
         if dim+1==self.dim:
@@ -66,13 +67,17 @@ class Node:
             dim = dim+1
         arr = []
         if self.left == None and self.right == None:
-            return self.point
+            return (self.name, self.awards)
         if self.point[dim] < name[dim]:
             a=self.left.kd_search(name,dim)
-            arr.append(a)
+            print(a)
+            arr+=a
+            arr.append((self.name, self.awards))
         else:
             a=self.right.kd_search(name,dim)
-            arr.append(a)
+            arr+=a
+            arr.append((self.name, self.awards))
+
         return arr
 
 def printNode(node, string=""):
