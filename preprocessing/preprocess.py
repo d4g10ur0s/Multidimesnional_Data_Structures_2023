@@ -11,10 +11,11 @@ import logging
 import inspect
 import random as rnd
 
+from data_structures.cosQuadTree import cosQuadTree as cqt
 from data_structures.quadTree import QuadTree as qt
 from data_structures.rTree import Rtree as rt
-from data_structures.rangeTree import RangeTree as ranget
-from data_structures.rangeTree import printNode
+from data_structures.kdTree import KDTree as kdtree
+from data_structures.kdTree import printNode
 from data_structures.cosineLSH import CosineLSH as clsh
 
 path = os.getcwd()
@@ -65,10 +66,13 @@ def rTreeSearchInput(quad = False):
             name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
         if quad :
-            name.append(-gmean/gmax)
-        name.append(int(input("Number of Awards : "))/gawmax)
-    elif quad==True:
-        name.append(0)
+            name.append(-gmean/gmax)#2. QUADTREE
+            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
+        name.append(int(input("Number of Awards : "))/gawmax)#isws na parw meso oro
+    else:
+        # no awards
+        name.append(rnd.uniform(0, 1))
+
     return name
 
 # String to Float
@@ -252,29 +256,46 @@ def main():
     choice1 = int(input())
     # Main Menu choice
     while choice1 != -1:
+        ''' gia na douleuei pio euelikta '''
+        gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
+        if gdim == len(temp[0]) - 2 :
+            pass
+        else:
+            ttemp = []
+            for i in temp:
+                ttemp.append( i[:gdim] + i[len(i)-2:] )
+            temp = ttemp
         # Kd Tree
+        kd = kdtree(temp[:])
         if choice1 == 0:
             Menu()
             choice2 = int(input())
             while choice2 != -1:
                 # Print Tree
-                if choice == 0:
-                  print()
-
+                if choice2 == 0:
+                    printNode(kd.root)
                 # Search + LSH
-                elif choice == 1:
-                    print()
+                elif choice2 == 1:
+                    pass
                 # Delete Node
-                elif choice == 2:
+                elif choice2 == 2:
                   print()
+                Menu()
+                choice2 = int(input())
 
-            Menu()
-            choice2 = int(input())
 
 
         # Rtree
         elif choice1 == 1:
-            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
+            ''' tree creation '''
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
+            if gdim == len(temp[0]) - 2 :
+                pass
+            else:
+                ttemp = []
+                for i in temp:
+                    ttemp.append( i[:gdim] + i[len(i)-2:] )
+                temp = ttemp
             a = rt(dim=gdim, info=temp[:],min=2, max=4, mval=gmean/gmax)
             Menu()
             choice2 = int(input())
@@ -335,6 +356,11 @@ def main():
                 finally:
                     if str(input())=="break":
                         break
+        else:
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 3)+")"))
+            rnd.shuffle(temp[:])
+            a = cqt(dim = gdim, info = temp[:] ,max=4)#2.0
+            a.printQTree()#2.1
 
         MainMenu()
         choice1 = int(input())
