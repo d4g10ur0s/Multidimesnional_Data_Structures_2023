@@ -62,8 +62,8 @@ def rTreeSearchInput(quad = False):
             name[i] = (name[i]-gmean)/gmax
             #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
-            name.append(-gmean/gmax)#2. QUADTREE
+            name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            #name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
         if quad :
             name.append(-gmean/gmax)#2. QUADTREE
@@ -276,15 +276,14 @@ def main():
                     printNode(kd.root)
                 # Search + LSH
                 elif choice2 == 1:
-                    pass
+                    search_result = kd.searching(rTreeSearchInput())
+                    for s in search_result :
+                        print(str(s))
                 # Delete Node
                 elif choice2 == 2:
                   print()
                 Menu()
                 choice2 = int(input())
-
-
-
         # Rtree
         elif choice1 == 1:
             ''' tree creation '''
