@@ -38,16 +38,17 @@ class CosineLSH:
                 dvec.append(df_input.loc[:,i])
                 distance.append(pairwise_distances(df_input.loc[:,i].to_numpy(dtype='float32').reshape(1,-1), query.to_numpy(dtype='float32').reshape(1,-1), metric='cosine').flatten())
             names += tnames
-        #print(str(dvec))
         #calc cosine similarity
-
         distance_col = 'distance'
         nearest_neighbors = pd.DataFrame({
             'id': df_input.loc[:,names].columns, distance_col: distance
-        }).sort_values(distance_col).reset_index(drop=True)
-        print(str(nearest_neighbors))
-
-
+        }).sort_values(distance_col).reset_index(drop=True).drop_duplicates(subset=['id'])
+        nearest_neighbors = nearest_neighbors.reset_index(drop=True)
+        inp = int(input("Percentage : "))
+        count = 0
+        while nearest_neighbors.iloc[count]["distance"][0] <= inp/100:
+            count+=1
+        print(str(nearest_neighbors[:count]))
     def lshQuery1(self,query,search_result,df_input,window=None):
         #1. make index for query
         qbin = query.to_numpy(dtype='float32').dot(self.model["random_vectors"])>=0
@@ -67,8 +68,14 @@ class CosineLSH:
         distance_col = 'distance'
         nearest_neighbors = pd.DataFrame({
             'id': df_input.loc[:,names].columns, distance_col: distance
-        }).sort_values(distance_col).reset_index(drop=True)
+        }).sort_values(distance_col).reset_index(drop=True).drop_duplicates(subset=['id'])
         print(str(nearest_neighbors))
+        nearest_neighbors = nearest_neighbors.reset_index(drop=True)
+        inp = int(input("Percentage : "))
+        count = 0
+        while nearest_neighbors.iloc[count]["distance"][0] <= inp/100:
+            count+=1
+        print(str(nearest_neighbors[:count]))
 
     def lshQuery(self,query,search_result,df_input,window=None):
         #1. make index for query
@@ -87,11 +94,16 @@ class CosineLSH:
         print(str(dvec))
         #calc cosine similarity
 
-        distance_col = 'distance' 
+        distance_col = 'distance'
         nearest_neighbors = pd.DataFrame({
             'id': df_input.loc[:,names].columns, distance_col: distance
-        }).sort_values(distance_col).reset_index(drop=True)
-        print(str(nearest_neighbors))
+        }).sort_values(distance_col).reset_index(drop=True).drop_duplicates(subset=['id'])
+        nearest_neighbors = nearest_neighbors.reset_index(drop=True)
+        inp = int(input("Percentage : "))
+        count = 0
+        while nearest_neighbors.iloc[count]["distance"][0] <= inp/100:
+            count+=1
+        print(str(nearest_neighbors[:count]))
 
     def LSH(self,vdoc,doc,dim):
         np.random.seed(0)
@@ -99,7 +111,6 @@ class CosineLSH:
         names=vdoc.columns
         clen = len(vdoc.columns)
         buckets = {}
-        inp = int(input("Percentage : "))
         bnum = 4#round((inp/100)*clen)
         rvec = np.random.randn(dim, bnum)#create random vectors
 
