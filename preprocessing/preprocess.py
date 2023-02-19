@@ -62,8 +62,8 @@ def rTreeSearchInput(quad = False):
             name[i] = (name[i]-gmean)/gmax
             #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
-            name.append(-gmean/gmax)#2. QUADTREE
+            name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            #name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
         if quad :
             name.append(-gmean/gmax)#2. QUADTREE
