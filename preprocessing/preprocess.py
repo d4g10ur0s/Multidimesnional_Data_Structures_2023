@@ -62,8 +62,8 @@ def rTreeSearchInput(quad = False):
             name[i] = (name[i]-gmean)/gmax
             #name[i]=name[i]/gmax#akurh prospa8eia
         else:
-            name.append((ord(' ')-gmean)/gmax)#1. RTREE
-            #name.append(-gmean/gmax)#2. QUADTREE
+            #name.append((ord(' ')-gmean)/gmax)#1. RTREE
+            name.append(-gmean/gmax)#2. QUADTREE
     if d==1:
         if quad :
             name.append(-gmean/gmax)#2. QUADTREE
@@ -143,8 +143,8 @@ def main():
     global gmean
     global gawmax
 
-    path = os.getcwd()
-    path+="\\data\\scientists"
+    path = "/home/dag1/Desktop/4linux"
+    path+="/data/scientists"
     if not(os.path.exists("processedText.csv") or os.path.exists("scientists.csv")):
         max = 0#epilegw thn megisth timh apo encoding gia na yparxei sto diasthma [0,1]
         indx = 1
@@ -153,7 +153,7 @@ def main():
         ''' anoigw json file me scientists '''
         gmean = 0
         for sc in os.listdir(path):
-            scient = pd.read_json(path + "\\"+sc)
+            scient = pd.read_json(path + "/"+sc)
             #scient = json.load(f)
             pname , max = vectorize(scient.iloc[0]['name'], max)
             gmean += pd.DataFrame(pname).mean()
@@ -169,13 +169,13 @@ def main():
 
     '''   word2vec   '''
     '''
-    AYTA MONO STHN ARXH
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     corpus = api.load('text8')
     print(inspect.getsource(corpus.__class__))
     print(inspect.getfile(corpus.__class__))
     model = w2v(corpus)
-    model.save('.\\readyvocab.model')
+    model.save('./readyvocab.model')
+    AYTA MONO STHN ARXH
     AYTA MONO STHN ARXH
     '''
     #w2v start
@@ -220,13 +220,13 @@ def main():
         ''' to scientists paei gia save '''
         writeCsv(scientists,df_input)
         ''' save gmean and gmax '''
-        f = open(path+"\\var.txt","w+")
+        f = open(path+"/var.txt","w+")
         f.write(str(gmean)+'\n')
         f.write(str(gmax)+'\n')
         f.close()
 
     #read and start
-    f = open(path+"\\var.txt","r+")
+    f = open(path+"/var.txt","r+")
     lines= f.readlines()
     gmean = np.float64(lines[0])
     gmax = np.float64(lines[1])
@@ -348,6 +348,39 @@ def main():
             while 1:
                 try :
                     arr = a.qSearch(rTreeSearchInput(quad=True))
+                    count = 0
+                    to_del = {}
+                    names = []
+                    awards = []
+                    i = 0
+                    for s in arr:
+                        if len(s) > 0:
+                            names.append(s[0])
+                            awards.append(s[1])
+                            to_del[str(i)]=s[0]#??
+                            print("*"*10+" " + str(i+1)+ " " + "*"*10)
+                            print(str("Name : " + str(s[0]) + "\nAwards : " + str(s[1])))
+                            i+=1
+                    if input("Delete Entry \n(y\\n)\n")=="y":
+                        choice = int(input('Delete entry : '))
+                        a.qDelete(arr[choice-1][2],to_del[str(choice-1)])
+                    if input("Education Similarity Query\n(y\\n)\n") == "y":
+                        qv = gensim.utils.simple_preprocess(input("Query : \n"))
+                        df_query = preprocessQuery(len(df_input),qv,model)
+                        sres = lsh.lshQuery2(df_query,names,df_input,window=1)
+                except ValueError:
+                    print("Error !")
+                finally:
+                    if str(input())=="break":
+                        break
+        elif choice1 == 3:
+            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
+            rnd.shuffle(temp[:])
+            a = cqt(dim = gdim, info = temp[:] ,max=16)#2.0
+            a.printQTree()#2.1
+            while 1:
+                try :
+                    arr = a.qSearch(rTreeSearchInput(quad=True))
                     names = []
                     count = 0
                     for i in arr :
@@ -364,11 +397,6 @@ def main():
                 finally:
                     if str(input())=="break":
                         break
-        elif choice1 == 3:
-            gdim = int(input("How many dimensions ? (<="+str(len(temp[0]) - 2)+")"))
-            rnd.shuffle(temp[:])
-            a = cqt(dim = gdim, info = temp[:] ,max=32)#2.0
-            a.printQTree()#2.1
 
         MainMenu()
         choice1 = int(input())
