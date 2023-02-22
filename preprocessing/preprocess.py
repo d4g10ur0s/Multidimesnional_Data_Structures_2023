@@ -313,11 +313,11 @@ def main():
                     i = 0
                     for s in search_result:
                         if len(s) > 0:
-                            print(str(s[0][len(s[0])-2:len(s[0])]))
+                            print(str(i+1)+")  "+str(s[0][len(s[0])-2:len(s[0])]))
                             names.append(str(s[0][len(s[0])-2]))
                             awards.append(str(s[0][len(s[0])-1]))
                             to_del[str(i)]=s[1]
-                            i = +1
+                            i+=1
                     while 1 :
                         try :
                             if input("Delete Entry \n(y\\n)\n")=="y":
