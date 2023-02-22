@@ -421,6 +421,7 @@ class Rtree:
     def getLPath(self,indx,Q):
         starting_node=self._starting_node
         self._starting_node=False
+
         arr = [indx,]
         if self._nodes[indx].isLeaf():
             Q+=self._nodes[indx].getEntries()
@@ -450,8 +451,11 @@ class Rtree:
                     lindx=lnode.getParent()#6 continue with parent
                     self._nodes.pop(lindx)
                 else:
-                    arr,Q1=self.getLPath(lnode.getEntries(),Q)#4. append lnode's entries to Q
-                    Q+=Q1
+                    arr = []
+                    for i in lnode.getEntries():
+                        tarr,Q1=self.getLPath(i[1],Q)#4. append lnode's entries to Q
+                        arr+=tarr
+                        Q+=Q1
                     for k in arr:#5. delete every kid
                         self.adjustPointers(k)
                         self._nodes.pop(k)
