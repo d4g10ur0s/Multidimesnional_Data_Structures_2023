@@ -68,16 +68,16 @@ class Node:
         arr = []
         if self.left == None and self.right == None:
             return (self.name, self.awards)
-        if self.point[dim] < name[dim]:
+        if self.point[dim] < name[dim] and not (self.left==None):
             a=self.left.kd_search(name,dim)
             print(a)
             arr+=a
             arr.append((self.name, self.awards))
-        else:
+        elif not (self.right==None):
             a=self.right.kd_search(name,dim)
             arr+=a
             arr.append((self.name, self.awards))
-
+            
         return arr
 
 def printNode(node, string=""):
